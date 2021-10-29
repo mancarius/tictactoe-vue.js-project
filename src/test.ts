@@ -9,9 +9,9 @@ const config: {
   columns: number;
   winning_sequence_length: number;
 } = {
-  rows: 5,
-  columns: 5,
-  winning_sequence_length: 5,
+  rows: 3,
+  columns: 3,
+  winning_sequence_length: 3,
 };
 
 async function moveBot(): Promise<void> {
