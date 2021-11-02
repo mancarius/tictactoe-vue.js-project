@@ -15,6 +15,7 @@
     "firestore-jest-mock": "^0.17.0",
     "lodash": "^4.17.21",
     "rxjs": "^7.4.0",
+    "sass-loader": "^10.1.1",
     "vue": "^3.0.0",
     "vue-class-component": "^8.0.0-0",
     "vue-router": "^4.0.0-0",
