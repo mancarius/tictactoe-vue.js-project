@@ -1,8 +1,11 @@
 import _ from "lodash";
+import { ReplaySubject } from "rxjs";
+import BestMoveFinder from "./services/best-move-finder.service";
 import BoardService from "./services/board.service";
 import BotService from "./services/bot.service";
 import MatchService from "./services/match.service";
 import { PlayerService } from "./services/player.service";
+import { Move } from "./types/Move.interface";
 
 const config: {
   rows: number;
@@ -16,19 +19,29 @@ const config: {
 
 async function moveBot(): Promise<void> {
   console.log("Looking for next move...");
-  console.time("Moving");
-  const moveTo = await bot.getNextMove();
-  console.timeEnd("Moving");
+  const opponentSubscription = opponenetMoves.subscribe(
+    async (moves: Move[] | null) => {
+      console.time("Moving");
+      const moveTo = await bot.getNextMove(moves);
+      console.timeEnd("Moving");
 
-  if (moveTo !== null) {
-    board.updateCell(moveTo, { player: bot.uid });
-    const sequence = await match.checkSequence(moveTo);
+      if (moveTo !== null) {
+        board.updateCell(moveTo, { player: bot.uid });
+        const sequence = await match.checkSequence(moveTo);
 
-    if (sequence) console.log("WE HAVE A WINNER!", sequence.player);
-    print(sequence.sequences?.[0]);
-  } else {
-    console.log("No available moves");
-  }
+        if (sequence) console.log("WE HAVE A WINNER!", sequence.player);
+        else {
+          opponentSubscription.unsubscribe();
+          const nextOpponentMove = await bestOpponentMoves.find();
+          opponenetMoves.next(nextOpponentMove);
+        }
+
+        print(sequence.sequences?.[0]);
+      } else {
+        console.log("No available moves");
+      }
+    }
+  );
 }
 
 function print(sequence?: number[]) {
@@ -56,13 +69,18 @@ const player = new PlayerService("hum", "Mat", {});
 const bot = new BotService(player, board);
 const match = new MatchService([player, bot], board);
 
+const bestOpponentMoves = new BestMoveFinder(board, player);
+const opponenetMoves: ReplaySubject<Move[] | null> = new ReplaySubject(1);
+
 const testCells = ["hum", null, null, "bot", null, null, null, null, "hum"];
 
-export function init() {
+export async function init() {
   board.cells.forEach((cell, index) => {
     const player = _.shuffle(["hum", "bot", null, null, null])[0];
     board.updateCell(index, { ...cell, player });
   });
+
+  opponenetMoves.next(await bestOpponentMoves.find());
 
   print();
 

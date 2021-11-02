@@ -15,8 +15,17 @@ export default class BotService extends PlayerService {
     this._opponent = opponent;
   }
 
-  public async getNextMove() {
+  /**
+   *
+   *
+   * @return {*}
+   * @memberof BotService
+   */
+  public async getNextMove(
+    bestOpponentMoves: Move[] | null
+  ): Promise<number | null> {
     const opponentCells = this._board.getPlayerCells(this._opponent.uid);
+
     if (
       opponentCells.length <
       this._board.configurations.winning_sequence_length / 2
@@ -24,14 +33,11 @@ export default class BotService extends PlayerService {
       return this._randomCellIndex;
     }
 
-    const bestOpponentMoves = new BestMoveFinder(this._board, this._opponent);
-    const opponenetMoves = await bestOpponentMoves.find();
-
     const botCells = this._board.getPlayerCells(this.uid);
     const bestBotMoves = new BestMoveFinder(this._board, this);
     const botMoves = botCells.length > 1 ? await bestBotMoves.find() : null;
 
-    const bestNextMove = this._evaluateBestMove(botMoves, opponenetMoves);
+    const bestNextMove = this._evaluateBestMove(botMoves, bestOpponentMoves);
 
     const existsBestNextMove = bestNextMove !== null;
 
@@ -42,10 +48,27 @@ export default class BotService extends PlayerService {
     }
   }
 
+  /**
+   *
+   *
+   * @readonly
+   * @private
+   * @type {(number | null)}
+   * @memberof BotService
+   */
   private get _randomCellIndex(): number | null {
     return _.shuffle(this._board.emptyCells).shift() ?? null;
   }
 
+  /**
+   *
+   *
+   * @private
+   * @param {(Move[] | null)} playerMoves
+   * @param {(Move[] | null)} opponentMoves
+   * @return {*}  {(Move | null)}
+   * @memberof BotService
+   */
   private _evaluateBestMove(
     playerMoves: Move[] | null,
     opponentMoves: Move[] | null
