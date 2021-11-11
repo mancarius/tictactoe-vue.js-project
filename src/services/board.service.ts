@@ -1,8 +1,17 @@
 import * as Board from "@/types/board-types.interface";
 import _ from "lodash";
+import { Subject } from "rxjs";
+
+const changes$: Subject<Partial<BoardService>> = new Subject();
 
 export default class BoardService {
-  protected _config: Board.configurations = {
+  private _lastUpdate: any;
+
+  private get _changes$(): Subject<Partial<BoardService>> {
+    return changes$;
+  }
+
+  public readonly configurations: Board.configurations = {
     rows: 3,
     columns: 3,
     winning_sequence_length: 3,
@@ -11,7 +20,7 @@ export default class BoardService {
   protected _cellCollection: Board.cell[] = [];
 
   constructor(config: Partial<Board.configurations> = {}) {
-    this._config = { ...this._config, ...config };
+    this.configurations = { ...this.configurations, ...config };
     this._init();
   }
 
@@ -22,7 +31,7 @@ export default class BoardService {
    * @memberof BoardService
    */
   private _init() {
-    const { rows, columns } = this._config;
+    const { rows, columns } = this.configurations;
     const cellsLength = rows * columns;
 
     for (let i = 1; i <= cellsLength; i++) {
@@ -45,7 +54,7 @@ export default class BoardService {
    * @returns
    */
   private _getRow(position: number): number {
-    return Math.ceil(position / this._config.columns);
+    return Math.ceil(position / this.configurations.columns);
   }
 
   /**
@@ -56,18 +65,7 @@ export default class BoardService {
    * @returns
    */
   private _getColumn(position: number, row: number): number {
-    return position - (row - 1) * this._config.columns;
-  }
-
-  /**
-   *
-   *
-   * @readonly
-   * @type {Board.configurations}
-   * @memberof BoardService
-   */
-  public get configurations(): Board.configurations {
-    return this._config;
+    return position - (row - 1) * this.configurations.columns;
   }
 
   /**
@@ -88,11 +86,15 @@ export default class BoardService {
    * @param props {Partial<Board.cell>} A cell object partial
    */
   public updateCell(index: number, props: Partial<Board.cell>): void {
-    BoardService.updateCellAndReturnNewCells(
+    this._cellCollection = BoardService.updateCellAndReturnNewCells(
       index,
       props,
       this._cellCollection
     );
+
+    this._changes$.next({
+      ["_cellCollection" as string]: this._cellCollection,
+    });
   }
 
   /**
@@ -193,8 +195,7 @@ export default class BoardService {
   public static getEmptyCells(cells: Board.cell[]): Board.cell[] {
     const emptyCells: Board.cell[] = [];
     for (let i = 0; i < cells.length; i++) {
-      if (cells[i].player === null)
-        emptyCells.push(cells[i]);
+      if (cells[i].player === null) emptyCells.push(cells[i]);
     }
 
     return emptyCells;
@@ -207,12 +208,28 @@ export default class BoardService {
    * @return {*}  {Board.cell[]}
    * @memberof BoardService
    */
-  public getPlayerCells(player: Board.cell['player']): Board.cell[] {
+  public getPlayerCells(player: Board.cell["player"]): Board.cell[] {
     const playerCells: Board.cell[] = [];
     for (let i = 0; i < this.cells.length; i++) {
       if (this.cells[i].player === player) playerCells.push(this.cells[i]);
     }
 
     return playerCells;
+  }
+
+  /**
+   *
+   * @param data
+   */
+  public sync(data: any) {
+    data && Object.assign(this, data);
+  }
+
+  /**
+   *
+   * @param callback
+   */
+  public subscribe(callback: (data: Partial<BoardService>) => void) {
+    this._changes$.subscribe((data) => callback(data));
   }
 }

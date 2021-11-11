@@ -5,7 +5,7 @@ import BoardService from "./services/board.service";
 import BotService from "./services/bot.service";
 import MatchService from "./services/match.service";
 import { PlayerService } from "./services/player.service";
-import { Move } from "./types/Move.interface";
+import { Move } from "./types/move.interface";
 
 const config: {
   rows: number;

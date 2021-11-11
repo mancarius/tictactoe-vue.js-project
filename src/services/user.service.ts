@@ -1,17 +1,13 @@
+import User from "@/types/user.interface";
+
 export default class UserService {
-  private _uid: string | null = null;
-  private _name: string | null = null;
+  public readonly uid: User["uid"];
+  public readonly displayName: User["displayName"];
+  public readonly photoURL: User["photoURL"];
 
-  constructor(uid: string, name: string) {
-    this._uid = uid;
-    this._name = name;
-  }
-
-  public get uid() {
-    return this._uid;
-  }
-
-  public get name() {
-    return this._name;
+  constructor({ uid, displayName, photoURL }: User) {
+    this.uid = uid;
+    this.displayName = displayName;
+    this.photoURL = photoURL;
   }
 }

@@ -1,16 +1,29 @@
 import { cell } from "@/types/board-types.interface";
-import { Move } from "@/types/Move.interface";
+import { Move } from "@/types/move.interface";
+import * as Player from "@/types/player.interface";
+import User from "@/types/user.interface";
 import _ from "lodash";
 import BestMoveFinder from "./best-move-finder.service";
 import BoardService from "./board.service";
-import { PlayerService } from "./player.service";
+import PlayerService from "./player.service";
 
 export default class BotService extends PlayerService {
   private _board: BoardService;
   private _opponent: PlayerService;
 
   constructor(opponent: PlayerService, board: BoardService) {
-    super("bot", "Bot");
+    const bot: User = {
+      displayName: "Bot",
+      uid: "bot",
+      photoURL: "",
+    };
+
+    const options: Player.options = {
+      isHost: false,
+      sign: "robot",
+    };
+
+    super(bot, options);
     this._board = board;
     this._opponent = opponent;
   }

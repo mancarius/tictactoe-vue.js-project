@@ -1,28 +1,52 @@
 <template>
-  <page-header-vue/>
-  <router-view />
+  <page-header></page-header>
+  <main class="main-container">
+    <transition name="slide">
+      <router-view></router-view>
+    </transition>
+  </main>
+  <footer>
+    <p>Mattia Mancarella</p>
+  </footer>
+  <!-- Loader spinner -->
+  <page-loading />
+  <!-- User Auth -->
+  <user-auth />
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import PageHeaderVue from './components/PageHeader.vue'
+import PageHeader from './components/PageHeader.vue'
+import PageLoading from './components/PageLoading.vue'
+import UserAuth from './components/UserAuth.vue'
+import { Actions } from './helpers/enums/actions.enum'
+import store from './store'
 
 export default defineComponent({
-  name:"App",
-  components: {PageHeaderVue},
- 
+  components: { PageHeader, PageLoading, UserAuth },
+  name: 'App',
+
+  data () {
+    return {
+      //
+    }
+  },
+
+  beforeCreate() {
+    store.dispatch(Actions.STATE_INIT);
+  }
 })
 </script>
 
-
-<style lang="scss">
-@import url('https://fonts.googleapis.com/css2?family=Rancho&display=swap');
-
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<style lang="scss" scope>
+  .main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  footer {
+    display: flex;
+    justify-content: center;
+  }
 </style>

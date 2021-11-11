@@ -17,5 +17,6 @@ export default defineComponent({
     h1 {
         font-family: 'Rancho', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
         font-size: 2.625rem;
+        margin: 0;
     }
 </style>

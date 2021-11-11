@@ -1,7 +1,7 @@
 import * as Board from "@/types/board-types.interface";
 import _ from "lodash";
 import BoardService from "./board.service";
-import { Move } from "@/types/Move.interface";
+import { Move } from "@/types/move.interface";
 import SequenceFinderService from "./sequence-finder.service";
 
 interface Crawler {

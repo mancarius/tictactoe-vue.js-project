@@ -1,8 +1,8 @@
 import * as Board from "@/types/board-types.interface";
 import _ from "lodash";
 import BoardService from "./board.service";
-import { Move } from "@/types/Move.interface";
-import { PlayerService } from "./player.service";
+import { Move } from "@/types/move.interface";
+import PlayerService from "./player.service";
 import Worker from "worker-loader!@/workers/crawler.worker";
 
 export default class BestMoveFinder {

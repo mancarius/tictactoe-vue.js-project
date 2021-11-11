@@ -1,29 +1,112 @@
+import { convertClassToObject } from "@/helpers/convertClassToObject";
 import { MatchStates } from "@/helpers/enums/match-states.enum";
+import { MatchTypes } from "@/helpers/enums/match-types.enum";
+import * as Board from "@/types/board-types.interface";
 import * as Match from "@/types/match.interface";
-import Player from "@/types/player.interface";
+import * as Player from "@/types/player.interface";
+import User from "@/types/user.interface";
+import _ from "lodash";
+import { Subject } from "rxjs";
+import BoardService from "./board.service";
+import BotService from "./bot.service";
+import PlayerService from "./player.service";
 import SequenceFinderService from "./sequence-finder.service";
 
-export default class MatchService {
-  private _id: Match.id | undefined;
-  private _players: Match.players;
-  private _board: Match.board;
-  private _state: Match.state = MatchStates.dormiant;
+const changes$: Subject<Partial<MatchService>> = new Subject();
 
-  constructor(players: Match.players, board: Match.board) {
-    this._players = players;
-    this._board = board;
-    this._createNewMatch();
+export default class MatchService {
+  public readonly id: Match.id;
+  public readonly players: (PlayerService | BotService)[];
+  public readonly board: BoardService;
+  public readonly type: MatchTypes = MatchTypes.PLAYER_VS_COMPUTER;
+  private _state: Match.state = MatchStates.dormiant;
+  private _createdAt: any;
+  private _lastUpdate: any;
+
+  constructor(
+    players: [User, User?],
+    type: MatchTypes,
+    boardConfigs?: Partial<Board.configurations>
+  ) {
+    this.board = boardConfigs
+      ? new BoardService(boardConfigs)
+      : new BoardService();
+
+    this.players = players
+      .filter((user) => user !== undefined && user.uid !== "bot")
+      .map<PlayerService>((user) => new PlayerService(user as User));
+
+    if (type === MatchTypes.PLAYER_VS_COMPUTER) {
+      const botSrv = players
+        .filter((user) => user !== undefined && user.uid === "bot")
+        .map<BotService>(() => new BotService(this.players[0], this.board));
+
+      this.players = [...this.players, ...botSrv];
+
+      this.id = "vsbot";
+    } else {
+      this.id = MatchService.generateCode(this.players[0].displayName);
+    }
+
+    this.type = type;
   }
 
   /**
-   * Creates new match and returns generated id
    *
    * @private
    * @return {*}  {string}
    * @memberof MatchService
    */
-  private async _createNewMatch(): Promise<string> {
-    return "match_id";
+  public static generateConfigs(type: MatchTypes, host: PlayerService) {
+    let initialConfigs: any = {
+      type: type,
+      _state: MatchStates.building,
+    };
+
+    if (type === MatchTypes.PLAYER_VS_PLAYER) {
+      const roomCode = MatchService.generateCode(host.displayName);
+      initialConfigs = {
+        ...initialConfigs,
+        id: roomCode,
+      };
+    } else {
+      const opponent = convertClassToObject(BotService);
+
+      initialConfigs = {
+        ...initialConfigs,
+        opponent,
+      };
+    }
+
+    return initialConfigs;
+  }
+
+  /**
+   *
+   * @param match
+   * @returns
+   */
+  public static create(match: any) {
+    match.players = match.players.map((_player: any) => {
+      const player = Object.setPrototypeOf(_player, PlayerService.prototype);
+      if (!(player instanceof PlayerService))
+        throw new Error("Invalid instance for Player");
+      return player;
+    });
+
+    match.board = Object.setPrototypeOf(match.board, BoardService.prototype);
+    if (!(match.board instanceof BoardService))
+      throw new Error("Invalid instance for Board");
+
+    const newMatch = Object.setPrototypeOf(match, MatchService.prototype);
+    if (!(newMatch instanceof MatchService))
+      throw new Error("Invalid instance for Match");
+
+    return newMatch;
+  }
+
+  public sync(data: any): void {
+    data && Object.assign(this, data);
   }
 
   /**
@@ -50,23 +133,40 @@ export default class MatchService {
    * @return {*}  {Match[]}
    * @memberof MatchService
    */
-  public static async findMatchByPlayer(
-    player1: Player["userId"],
-    player2?: Player["userId"]
+  public static async findMatchByPlayers(
+    player1: Player.userId,
+    player2?: Player.userId
   ): Promise<Match.default[]> {
     return [];
   }
 
   /**
-   * Saves the match state
+   * Join user to match creating a new player
    *
-   * @return {*}  {Promise<void>}
    * @memberof MatchService
    */
-  public async save(): Promise<void> {
-    return undefined
+  public join(user: User): PlayerService {
+    if (!(this.getPlayer(user.uid) instanceof PlayerService)) {
+      if (this.players.length > 1)
+        throw new Error("Reached the maximum number of players");
+      else {
+        const { uid, displayName, photoURL } = user;
+        const player = Object.setPrototypeOf(
+          { uid, displayName, photoURL },
+          PlayerService.prototype
+        );
+        this.players.push(player);
+      }
+    }
+
+    return this.getPlayer(user.uid);
   }
 
+  /**
+   *
+   * @param id
+   * @returns
+   */
   public async checkSequence(id: number): Promise<any> {
     const sequenceFinder = new SequenceFinderService(
       this.board.configurations,
@@ -74,37 +174,73 @@ export default class MatchService {
       this.board.cells[id].player
     );
 
-    const sequences = await sequenceFinder.allPassingSequences(this.board.cells[id]);
+    const sequences = await sequenceFinder.allPassingSequences(
+      this.board.cells[id]
+    );
+
     if (sequences.length) {
-      return { player: this.board.cells[id].player , sequences};
+      return { player: this.board.cells[id].player, sequences };
     } else {
       return false;
     }
   }
 
+  /**
+   *
+   *
+   * @readonly
+   * @private
+   * @type {Subject<Partial<MatchService>>}
+   * @memberof MatchService
+   */
+  private get _changes$(): Subject<Partial<MatchService>> {
+    return changes$;
+  }
+
+  /**
+   *
+   * @param callback
+   */
+  public subscribe(callback: (data: Partial<MatchService>) => void) {
+    this._changes$.subscribe((data) => callback(data));
+  }
+
   // getters & setters
 
-  public set board(value: Match.board) {
-    this._board = value;
-  }
-
-  public get board(): Match.board {
-    return this._board;
-  }
-
-  public set state(value: Match.state) {
+  public set state(value: MatchStates) {
     this._state = value;
+    this._changes$.next({ ["_state" as MatchService["state"]]: this._state });
   }
 
-  public get state(): Match.state {
+  public get state(): MatchStates {
     return this._state;
   }
 
-  public get players(): Match.players {
-    return this._players;
+  public getPlayer(userId: Player.userId): PlayerService {
+    return this.players.filter((player) => player.uid === userId)[0];
   }
 
-  public get id(): Match.id {
-    return this._id as Match.id;
+  public getOpponent(userId: Player.userId): PlayerService | BotService {
+    return this.players.filter((player) => player.uid !== userId)[0];
+  }
+
+  /**
+   * Generate a 8 character length alphanumeric string
+   * @param {String} displayName
+   * @returns
+   */
+  public static generateCode(displayName: string): string {
+    const consonants = displayName
+      .replace(/[aeiou\s+]/gi, "")
+      .substr(0, 4)
+      .toLocaleUpperCase();
+
+    const randomNumber = _.random(1000, 9999).toString();
+
+    const composedCode = consonants + randomNumber;
+
+    const shuffleCode = _.shuffle(composedCode.split(""));
+
+    return shuffleCode.join("");
   }
 }
