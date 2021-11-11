@@ -1,16 +1,16 @@
 <template>
     <template v-if="button">
         <button :class="{shadow: shadow, 'browser-default': true}">
-            <img :src="src" />
+            <img :src="imageSRC" />
         </button>
     </template>
     <template v-else>
-            <img :src="src" :class="{shadow: shadow}" />
+            <img :src="imageSRC" :class="{shadow: shadow}" />
     </template>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from 'vue';
 
 export default defineComponent({
     name: "Avatar",
@@ -19,6 +19,11 @@ export default defineComponent({
         shadow: Boolean,
         button: Boolean
         },
+    computed: {
+        imageSRC() {
+            return this.src || '@/assets/avatar.jpg'
+        }
+    },
 })
 </script>
 
