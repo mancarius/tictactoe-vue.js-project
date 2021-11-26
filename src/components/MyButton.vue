@@ -1,33 +1,33 @@
 <template>
-    <button :class="classes">
+    <q-btn :class="classes">
         <slot></slot>
-    </button>
+    </q-btn>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-    name: "MyButton",
-    props: {
-        primary: Boolean,
-        secondary: Boolean,
-        fullWidth: Boolean,
-    },
-    data(){
-        return {
-            classes: {
-                'bg-primary': this.primary,
-                'bg-secondary': this.secondary,
-                'full-width': this.fullWidth
-            }
-        }
+  name: "MyButton",
+  props: {
+    fullWidth: Boolean,
+  },
+  data(){
+    return {
+      classes: {
+        'full-width': this.fullWidth
+      }
     }
+  }
 })
 </script>
 
 <style lang="scss" scoped>
-    .full-width {
-        width: 100%;
-    }
+  .full-width {
+    width: 100%;
+  }
+
+  .text-white {
+    color: inherit !important;
+  }
 </style>

@@ -1,12 +1,12 @@
 <template>
-    <header>
+    <header v-if="visible">
         <div></div>
         <div class="title-container">
             <title-vue/>
         </div>
         <div>
           <q-btn v-if="isUserAuthed" class="browser-default" round>
-            <avatar-vue :src="user.photoURL" shadow />
+            <avatar-vue :src="user.photoURL" />
             <q-menu :offset="[0, 10]">
               <q-list separator>
                 <q-item clickable v-ripple v-close-popup to="/account/settings" exact>
@@ -30,30 +30,49 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, ref, watch } from 'vue';
 import TitleVue from '@/components/Title.vue';
 import AvatarVue from '@/components/Avatar.vue';
 import store from '@/store';
 import { Getters } from '@/helpers/enums/getters.enum';
 import User from '@/types/user.interface';
 import { Actions } from '@/helpers/enums/actions.enum';
+import { useRoute } from 'vue-router';
+import { Routes } from '@/helpers/enums/routes.enum';
 
 export default defineComponent({
-    name: "PageHeader",
-    components: {TitleVue, AvatarVue},
-    data() {
-        return {}
-    },
-    methods: {
-        async logout() {
-          store.dispatch(Actions.USER_LOG_OUT).then(() => this.$router.push({name: "Home"}))
-        }
-    },
-    computed: {
-        isUserAuthed: (): boolean => store.getters[Getters.USER_IS_AUTHED],
+  name: "PageHeader",
 
-        user: (): User => store.getters[Getters.USER_DATA]
+  components: {TitleVue, AvatarVue},
+
+  setup() {
+    const route = useRoute();
+    const visible = ref(true);
+
+    watch(() => route.name, (nextRoute) => {
+      visible.value = nextRoute !== Routes.game;
+    });
+
+    return {
+      visible
     }
+  },
+
+  data() {
+    return {}
+  },
+
+  methods: {
+    async logout() {
+      store.dispatch(Actions.USER_LOG_OUT).then(() => this.$router.push({name: "Home"}))
+    }
+  },
+
+  computed: {
+    isUserAuthed: (): boolean => store.getters[Getters.USER_IS_AUTHED],
+
+    user: (): User => store.getters[Getters.USER_DATA]
+  }
 })
 </script>
 

@@ -42,12 +42,24 @@ h2 {
     font-size: 1.2rem;
 }
 
+
+
+.text-primary {
+    color: #555 !important;
+}
+
 .bg-primary {
+    @extend .text-primary;
     background-color: #F5F0DD !important;
 }
 
+.text-secondary {
+    color: #555 !important;
+}
+
 .bg-secondary {
-    background-color: #F1E9F4 !important;
+    @extend .text-secondary;
+    background-color: #f1e9f4 !important;
 }
 
 button:not(.browser-default),

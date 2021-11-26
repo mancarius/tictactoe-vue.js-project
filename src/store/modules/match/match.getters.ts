@@ -1,13 +1,19 @@
-import Player from "@/types/player.interface";
+import { Getters } from "@/helpers/enums/getters.enum";
 import { GetterTree } from "vuex";
 import { State } from "vuex/core";
 
 const getters: GetterTree<State["match"], State> = {
-  player: ({players}: State["match"]) => players[0],
+  player: ({ player }: State["match"]) => player,
 
-  opponent: ({players}: State["match"]) => players[1],
+  opponent: ({ opponent }: State["match"]) => opponent,
 
-  host: (match: State["match"]) => match.players.map((player: Player) => player.uid === match.host)
+  [Getters.MATCH_EXIT]: ({ exit }) => exit,
+
+  [Getters.MATCH_STATE]: ({ state }) => state,
+
+  [Getters.PLAYER_STATE]: ({ player }) => player.state,
+
+  [Getters.OPPONENT_STATE]: ({ opponent }) => opponent.state,
 };
 
 export default getters;

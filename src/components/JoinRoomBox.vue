@@ -1,7 +1,7 @@
 <template>
     <div class="body">
         <input type="text" placeholder="Insert the room code" ref="input" />
-        <my-button primary @click="searchRoom">Join</my-button>
+        <q-btn color="primary" @click="joinRoom">Join</q-btn>
     </div>
 </template>
 
@@ -11,65 +11,91 @@ import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import { Mutations } from '@/helpers/enums/mutations.enum';
 import MatchService from '@/services/match.service';
-import MatchPlugin from '@/plugins/match/types/match-plugin.interface';
 import { useQuasar } from 'quasar';
-import { computed, defineComponent, inject, ref } from 'vue'
+import { computed, defineComponent, ref } from 'vue'
 import { useRouter } from 'vue-router';
 import { MutationPayload, useStore } from 'vuex';
-import MyButton from './MyButton.vue'
+import { useMatch } from '@/plugins/match';
 
 export default defineComponent({
-  components: { MyButton },
   name:"JoinRoomBox",
 
   setup() {
     const store = useStore();
     const router = useRouter();
     const input = ref<HTMLInputElement>();
-    const $match = inject("match") as MatchPlugin;
+    const $match = useMatch();
     const $q = useQuasar();
     const roomCode = computed(() => input.value?.value || null);
 
-    const searchRoom = async () => {
-      if(roomCode.value) {
-        
-        if(!store.getters[Getters.USER_IS_AUTHED]) {
-          store.dispatch(Actions.USER_REQUIRE_AUTH);
+    const joinRoom = async () => {
+      // perform user auth if needed
+      if(!store.getters[Getters.USER_IS_AUTHED]) {
+        store.dispatch(Actions.USER_REQUIRE_AUTH);
 
-          await new Promise((resolve, reject) => {
-            store.subscribe((mutation: MutationPayload) => {
-              if (mutation.type === Mutations.USER_SET) {
-                store.getters[Getters.USER_IS_AUTHED] ? resolve(true) : reject();
-              }
-            });
-          })
-            .catch((error) => {
-              console.error(error);
-              $q.notify({message: "Authentication failed"});
-              return;
-            })
-            .finally(() => store.dispatch(Actions.USER_REQUIRE_AUTH, false));
-        }
-
-        input.value!.disabled = true;
-        store.dispatch(Actions.LOADING_START, "Knocking on the room...");
-
-        const room = await $match.find(roomCode.value as string);
-
-        try {
-          $match.service = MatchService.create(room);
-          router.push({
-            name: "Lobby", 
-            params: {
-              matchType: MatchTypes.PLAYER_VS_PLAYER,
-              matchId: $match.service.id
+        await new Promise((resolve, reject) => {
+          store.subscribe((mutation: MutationPayload) => {
+            if (mutation.type === Mutations.USER_SET) {
+              store.getters[Getters.USER_IS_AUTHED] ? resolve(true) : reject();
             }
           });
-        } catch(error: any) {
-          console.error(error.message);
-          $q.notify({message: "Room not found"});
-          store.dispatch(Actions.LOADING_STOP);
+        })
+          .catch((error) => {
+            console.error(error);
+            $q.notify({message: "Authentication failed"});
+            return;
+          })
+          .finally(() => store.dispatch(Actions.USER_REQUIRE_AUTH, false));
+      }
+      // find room
+      store.dispatch(Actions.LOADING_START, "Knocking on the room...");
+      input.value!.disabled = true;
+
+      const user = store.getters[Getters.USER_DATA];
+
+      try{
+        if(!roomCode.value){
+          throw TypeError("Bad room code");
         }
+        
+        const room = await searchRoom(roomCode.value);
+        $match.service = MatchService.create(room);
+        await $match.join(room.id, user);
+
+        $match.service.subscribe(({state}) => {
+          if(state !== undefined) store.dispatch(Actions.MATCH_SET_STATE, state);
+        });
+        $match.player?.subscribe(({state}) => {
+          if(state !== undefined) store.dispatch(Actions.PLAYER_SET_STATE, state);
+        });
+        $match.opponent?.subscribe(({state}) => {
+          if(state !== undefined) store.dispatch(Actions.OPPONENT_SET_STATE, state);
+        });
+
+      } catch(error) {
+
+        console.error(error);
+        $q.notify({message: "Room not found"});
+        store.dispatch(Actions.LOADING_STOP);
+        input.value!.disabled = false;
+        return;
+
+      }
+
+      router.push({
+        name: "Lobby", 
+        params: {
+          matchType: MatchTypes.PLAYER_VS_PLAYER,
+          matchId: $match.service.id
+        }
+      });
+    }
+
+    const searchRoom = async (roomCode: string) => {
+      if(roomCode) {
+        return await $match.find(roomCode as string);
+      } else {
+        throw new TypeError("Expected a 'string' but received "+typeof roomCode)
       }
     }
 
@@ -78,9 +104,10 @@ export default defineComponent({
 
       roomCode,
 
-      searchRoom
+      searchRoom, 
+      joinRoom
     }
-  }
+  },
 
 })
 </script>

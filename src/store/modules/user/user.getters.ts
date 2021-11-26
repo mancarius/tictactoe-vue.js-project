@@ -5,7 +5,7 @@ import { State } from "vuex/core";
 
 const getters: GetterTree<State["user"], State> = {
   [Getter.USER_DATA](state): User["uid"] {
-    return state.data;
+    return state.data || { uid: "player", displayName: "You", photoURL: "" };
   },
 
   [Getter.USER_IS_AUTHED](state): boolean {

@@ -12,11 +12,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, inject } from 'vue';
+import { defineComponent } from 'vue';
 import { MatchTypes } from '@/helpers/enums/match-types.enum';
-import MatchPlugin from '@/plugins/match/types/match-plugin.interface';
-import store from '@/store';
-import { Actions } from '@/helpers/enums/actions.enum';
  
 export default defineComponent({
     name:"GameModeSelectBox",

@@ -2,45 +2,19 @@ import mutations from "./match.mutations";
 import getters from "./match.getters";
 import actions from "./match.actions";
 import { StoreOptions } from "vuex";
+import { MatchStates } from "@/helpers/enums/match-states.enum";
+import { PlayerStates } from "@/helpers/enums/player-states.enum";
 
 const matchStore: StoreOptions<any> = {
   state: {
-    state: null,
-    type: null,
-    host: null,
-    id: null,
-    players: [
-      {
-        displayName: null,
-        uid: null,
-        imageURL: null,
-        score: 0,
-        options: {
-          sign: null,
-          isHost: false,
-          customName: "",
-        },
-      },
-      {
-        displayName: null,
-        uid: null,
-        imageURL: null,
-        score: 0,
-        options: {  
-          sign: null,
-          isHost: false,
-          customName: "",
-        },
-      },
-    ],
-    board: {
-      configs: {
-        rows: 0,
-        columns: 0,
-        winning_sequence_length: 0
-      },
-      cellCollection: [],
+    state: MatchStates.dormiant,
+    player: {
+      state: PlayerStates.none,
     },
+    opponent: {
+      state: PlayerStates.none,
+    },
+    exit: false,
   },
 
   getters,

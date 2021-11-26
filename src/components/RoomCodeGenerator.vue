@@ -4,11 +4,16 @@
           <h6>Room code</h6>
       </template>
       <template #default>
+        <template  v-if="roomCode">
           <div class="fake-input room-code-field">
-              <span id="room-code" ref="roomCode">{{roomCode}}</span>
-              <my-button primary @click="copyCodeToClipboard">Copy</my-button>
+            <span id="room-code" ref="roomCode">{{roomCode}}</span>
+            <my-button color="primary" @click="copyCodeToClipboard">Copy</my-button>
           </div>
           <p>Share this room code with the friend you want to invite to play.</p>
+        </template>
+        <template v-else>
+          <p>Invalid code</p>
+        </template>
       </template>
     </card>
 </template>
@@ -17,13 +22,10 @@
 import Card from '@/components/Card.vue';
 import MyButton from '@/components/MyButton.vue';
 import { Actions } from '@/helpers/enums/actions.enum';
-import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import store from '@/store';
 import MatchPlugin from '@/plugins/match/types/match-plugin.interface';
-import { defineComponent, inject } from 'vue';
-import { useStore } from 'vuex';
+import { defineComponent } from 'vue';
 import { useMatch } from '@/plugins/match';
-import { Getters } from '@/helpers/enums/getters.enum';
 
 
 declare module "@vue/runtime-core" {
@@ -37,15 +39,8 @@ export default defineComponent({
 
   components: { Card, MyButton },
 
-  async setup() {
-    const store = useStore();
-    store.dispatch(Actions.LOADING_START, "Building the room...");
+  setup() {
     const $match = useMatch();
-    try {
-      await $match.create(store.getters[Getters.USER_DATA], MatchTypes.PLAYER_VS_PLAYER);
-    } catch (error) {
-      console.error(error);
-    }
 
     return {
       roomCode: $match.service?.id

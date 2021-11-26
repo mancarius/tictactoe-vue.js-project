@@ -21,10 +21,11 @@ export type board = {
 export type scores = [number, number];
 
 export default interface Match {
-  type: type;
-  players: players;
-  id: id;
-  host: host;
-  state: state;
-  board: board;
+  player: {
+    index: number;
+  },
+  opponent: {
+    index: number;
+  },
+  exit: boolean
 }

@@ -1,15 +1,15 @@
+import filterDifferentFields from "@/helpers/filterDifferentFields";
+import removeObservables from "@/helpers/removeObservables";
 import * as Board from "@/types/board-types.interface";
+import Player from "@/types/player.interface";
 import _ from "lodash";
-import { Subject } from "rxjs";
+import { Observer, ReplaySubject, Subscription } from "rxjs";
 
-const changes$: Subject<Partial<BoardService>> = new Subject();
 
 export default class BoardService {
-  private _lastUpdate: any;
-
-  private get _changes$(): Subject<Partial<BoardService>> {
-    return changes$;
-  }
+  private _changes$: ReplaySubject<Partial<BoardService>> = new ReplaySubject(
+    1
+  );
 
   public readonly configurations: Board.configurations = {
     rows: 3,
@@ -19,9 +19,70 @@ export default class BoardService {
 
   protected _cellCollection: Board.cell[] = [];
 
+  public lastUpdatedCells: number[] = [];
+
+  public winningSequence: Board.WinningSequence = false;
+
   constructor(config: Partial<Board.configurations> = {}) {
     this.configurations = { ...this.configurations, ...config };
-    this._init();
+    this._initCells();
+
+    return new Proxy(this, {
+      get: (target: BoardService, prop: string | symbol, receiver: any) => {
+        //remove empty cells from lastUpdatedCells
+        if (prop === "lastUpdatedCells") {
+          target[prop] = target[prop].filter(
+            (cellIndex: number) =>
+              target["_cellCollection"][cellIndex].player !== null
+          );
+        }
+
+        return Reflect.get(target, prop, receiver);
+      },
+      set: (target: BoardService, prop: string | symbol, value: any) => {
+        const isArray = Array.isArray(Reflect.get(target, prop));
+        const isObject =
+          typeof Reflect.get(target, prop) === "object" && !isArray;
+
+        Reflect.set(
+          target,
+          prop,
+          isObject ? { ...Reflect.get(target, prop), ...value } : value
+        );
+        this._changes$.next({ [prop]: value });
+
+        return true;
+      },
+    });
+  }
+
+  /**
+   *
+   *
+   * @static
+   * @param {Partial<BoardService>} data
+   * @return {*}
+   * @memberof BoardService
+   */
+  public static create(data: Partial<BoardService>) {
+    const { configurations } = data;
+    if (typeof configurations === "object") {
+      const board = new BoardService(configurations);
+      board.sync(data);
+      return board;
+    } else {
+      throw new TypeError("configurations misses or are invalid");
+    }
+  }
+
+  /**
+   * Returns an object instance without observables
+   *
+   * @return {*}  {string}
+   * @memberof BoardService
+   */
+  public toObject(): Record<string, any> {
+    return removeObservables(this);
   }
 
   /**
@@ -30,14 +91,15 @@ export default class BoardService {
    * @private
    * @memberof BoardService
    */
-  private _init() {
+  private _initCells() {
     const { rows, columns } = this.configurations;
     const cellsLength = rows * columns;
+    const collection = [];
 
     for (let i = 1; i <= cellsLength; i++) {
       const y = this._getRow(i);
       const x = this._getColumn(i, y);
-      this._cellCollection.push({
+      collection.push({
         player: null,
         coords: {
           y,
@@ -45,6 +107,19 @@ export default class BoardService {
         },
       });
     }
+
+    this._cellCollection = collection;
+  }
+
+  /**
+   *
+   *
+   * @memberof BoardService
+   */
+  public reset(): void {
+    this._initCells();
+    this.lastUpdatedCells = [];
+    this.winningSequence = false;
   }
 
   /**
@@ -92,9 +167,26 @@ export default class BoardService {
       this._cellCollection
     );
 
-    this._changes$.next({
-      ["_cellCollection" as string]: this._cellCollection,
+    this.lastUpdatedCells = [index];
+  }
+
+  /**
+   *
+   *
+   * @memberof BoardService
+   */
+  public shuffleCells(): void {
+    const tempCells = _.shuffle(this.cells);
+    this._cellCollection = this._cellCollection.map((cell, index) => {
+      return { ...cell, player: tempCells[index].player };
+    })
+    const notEmptyCells: number[] = [];
+    this.cells.forEach(({ player }, index) => {
+      if (typeof player === "string") {
+        notEmptyCells.push(index);
+      }
     });
+    this.lastUpdatedCells = notEmptyCells;
   }
 
   /**
@@ -208,10 +300,10 @@ export default class BoardService {
    * @return {*}  {Board.cell[]}
    * @memberof BoardService
    */
-  public getPlayerCells(player: Board.cell["player"]): Board.cell[] {
+  public getPlayerCells(uid: Player["uid"]): Board.cell[] {
     const playerCells: Board.cell[] = [];
     for (let i = 0; i < this.cells.length; i++) {
-      if (this.cells[i].player === player) playerCells.push(this.cells[i]);
+      if (this.cells[i].player === uid) playerCells.push(this.cells[i]);
     }
 
     return playerCells;
@@ -219,17 +311,68 @@ export default class BoardService {
 
   /**
    *
-   * @param data
+   *
+   * @memberof BoardService
    */
-  public sync(data: any) {
-    data && Object.assign(this, data);
+  public clearWinningCells(): void {
+    if (this.winningSequence) {
+      const sequence = this.winningSequence.sequence;
+      // clear cells
+      sequence.map((cellIndex) => {
+        const cell = this._cellCollection[cellIndex];
+        this._cellCollection[cellIndex] = { ...cell, player: null };
+      });
+
+      this.winningSequence = false;
+    }
   }
 
   /**
    *
-   * @param callback
+   * @param data
    */
-  public subscribe(callback: (data: Partial<BoardService>) => void) {
-    this._changes$.subscribe((data) => callback(data));
+  public sync(data: any): void {
+    if (!data) return;
+    const filteredFields = filterDifferentFields(this, data);
+
+    for (const [name, value] of Object.entries(filteredFields)) {
+      const isPublic = !name.startsWith("_");
+
+      if (isPublic) {
+        this[name as keyof this] = value;
+        continue;
+      } else {
+        const setterName = name.substr(1);
+        const proto = Object.getPrototypeOf(this);
+        const propertyDescriptors = Object.getOwnPropertyDescriptors(proto);
+        const hasSetter =
+          typeof propertyDescriptors[setterName]?.set === "function";
+        if (hasSetter) {
+          this[setterName as keyof this] = value;
+        } else {
+          this[name as keyof this] = value;
+        }
+      }
+    }
+  }
+
+  /**
+   *
+   */
+  public subscribe(
+    callback: Partial<Observer<Partial<BoardService>>> | ((data: any) => void)
+  ): Subscription {
+    const props =
+      typeof callback === "function"
+        ? {
+            next: callback,
+            error: (error: any) => {
+              throw error;
+            },
+          }
+        : Reflect.has(callback, "next")
+        ? callback
+        : undefined;
+    return this._changes$.subscribe(props);
   }
 }

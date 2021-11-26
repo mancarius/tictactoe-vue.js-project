@@ -1,25 +1,49 @@
-import db from "@/helpers/db";
 import { Actions } from "@/helpers/enums/actions.enum";
-import { MatchTypes } from "@/helpers/enums/match-types.enum";
+import { Getters } from "@/helpers/enums/getters.enum";
 import { Mutations } from "@/helpers/enums/mutations.enum";
-import { addDoc, Timestamp, doc, collection} from "@firebase/firestore";
 import { ActionTree } from "vuex";
 import { State } from "vuex/core";
 
 const actions: ActionTree<State["match"], State> = {
-  async [Actions.MATCH_CREATE]({ commit, state }, match: any): Promise<void> {
-    if (match.type === MatchTypes.PLAYER_VS_PLAYER) {
-      match = { ...match, createdAt: Timestamp.now() };
-      const collectionRef = collection(db, "matches");
-      await addDoc(collectionRef, match)
-        .then(() => {
-          commit(Mutations.MATCH_INIT, match);
-        })
-        .catch((error) => {
-          throw error;
-        });
-    } else {
-      commit(Mutations.MATCH_INIT, match);
+  [Actions.MATCH_SAVE_PLAYER_INDEX]: (
+    { rootGetters, commit, state },
+    match
+  ) => {
+    if (state.player.index !== -1) return;
+    const uid = rootGetters[Getters.USER_DATA].uid;
+    const playerIndex = match.getPlayerIndex(uid);
+    commit(Mutations.MATCH_SAVE_PLAYER_INDEX, playerIndex);
+  },
+
+  [Actions.MATCH_SAVE_OPPONENT_INDEX]: (
+    { rootGetters, commit, state },
+    match
+  ) => {
+    if (state.opponent.index !== -1) return;
+    const uid = rootGetters[Getters.USER_DATA].uid;
+    const opponentIndex = match.getOpponentIndex(uid);
+    commit(Mutations.MATCH_SAVE_PLAYER_INDEX, opponentIndex);
+  },
+
+  [Actions.MATCH_EXIT]: ({ commit }, payload = true) => {
+    commit(Mutations.MATCH_EXIT, payload);
+  },
+
+  [Actions.MATCH_SET_STATE]: ({ commit }, payload) => {
+    if (payload !== undefined) {
+      commit(Mutations.MATCH_SET_STATE, payload);
+    }
+  },
+
+  [Actions.PLAYER_SET_STATE]: ({ commit }, payload) => {
+    if (payload !== undefined) {
+      commit(Mutations.PLAYER_SET_STATE, payload);
+    }
+  },
+
+  [Actions.OPPONENT_SET_STATE]: ({ commit }, payload) => {
+    if (payload !== undefined) {
+      commit(Mutations.OPPONENT_SET_STATE, payload);
     }
   },
 };

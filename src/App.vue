@@ -1,9 +1,9 @@
 <template>
   <page-header></page-header>
   <main class="main-container">
-    <transition name="slide">
-      <router-view></router-view>
-    </transition>
+    <router-view v-slot="{Component}">
+      <component :is="Component"></component>
+    </router-view>
   </main>
   <footer>
     <p>Mattia Mancarella</p>
@@ -34,7 +34,7 @@ export default defineComponent({
 
   beforeCreate() {
     store.dispatch(Actions.STATE_INIT);
-  }
+  },
 })
 </script>
 

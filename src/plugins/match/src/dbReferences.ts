@@ -1,13 +1,14 @@
 import db from "@/helpers/db";
 import MatchService from "@/services/match.service";
 import { collection, doc, onSnapshot, query, Unsubscribe } from "@firebase/firestore";
+import { ReplaySubject } from "rxjs";
 import { dbReferences } from "../types/match-plugin.interface";
 
 export const dbRef: dbReferences = {
   match: null,
   board: null,
   players: {
-    docs: {},
+    docs: new ReplaySubject(),
     collection: null,
   },
 };
@@ -27,11 +28,12 @@ export const setDbReferences = (value: MatchService["id"]): Unsubscribe => {
   dbRef.players.collection = collection(db, "matches/" + value + "/players");
 
   const q = query(dbRef.players.collection);
+  const playerDocs: any = {};
 
   const unsubs = onSnapshot(q, (querySnapshot) => {
-    dbRef.players.docs = {};
     querySnapshot.forEach((doc) => {
-      if (doc.exists()) dbRef.players.docs[doc.data().uid] = doc.ref;
+      playerDocs[doc.data().uid] = doc.ref;
+      dbRef.players.docs.next(playerDocs);
     });
 
     if (querySnapshot.size === 2) {

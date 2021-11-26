@@ -24,12 +24,18 @@
 import Card from '@/components/Card.vue';
 import GameModeSelectBox from '@/components/GameModeSelectBox.vue';
 import JoinRoomBox from '@/components/JoinRoomBox.vue';
+import { Actions } from '@/helpers/enums/actions.enum';
+import store from '@/store';
 import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: 'Home',
 
   components: {Card, GameModeSelectBox, JoinRoomBox},
+
+  mounted() {
+    store.dispatch(Actions.LOADING_STOP);
+  }
 });
 </script>
 

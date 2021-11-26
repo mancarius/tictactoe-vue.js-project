@@ -15,3 +15,10 @@ export interface cell {
   coords: Coords;
   player: null | Player.userId;
 }
+
+export type WinningSequence =
+  | false
+  | {
+      player: string;
+      sequence: number[];
+    };

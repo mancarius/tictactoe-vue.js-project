@@ -1,75 +1,231 @@
 import { PlayerStates } from "@/helpers/enums/player-states.enum";
+import filterDifferentFields from "@/helpers/filterDifferentFields";
+import removeObservables from "@/helpers/removeObservables";
 import * as Player from "@/types/player.interface";
 import User from "@/types/user.interface";
-import { Subject } from "rxjs";
+import { Observer, ReplaySubject, Subject, Subscription } from "rxjs";
 import BoardService from "./board.service";
 import UserService from "./user.service";
 
-const changes$: Subject<Partial<PlayerService>> = new Subject();
 export default class PlayerService extends UserService {
-  private _lastUpdate: any;
-  protected _options: Player.options = {};
-  protected _state: PlayerStates = PlayerStates.in_lobby;
-  protected _score: Player.score = 0;
-  private get _changes$(): Subject<Partial<PlayerService>> {
-    return changes$;
-  }
+  public options: Player.options = {
+    sign: null,
+    customName: this.displayName,
+    isOwner: false,
+  };
+  public state: PlayerStates = PlayerStates.in_lobby;
+  public score: Player.score = 0;
+  public shuffleBuffer = 0;
+  public canShuffle = false;
+  private _changes$: Subject<Partial<PlayerService>> = new ReplaySubject(1);
 
-  constructor(user: User, options?: Player.options) {
+  constructor(user: User, options?: Partial<Player.options>) {
     super(user);
-    this._options = { ...this._options, ...options };
+
+    if (options && Object.keys(options).length > 0)
+      this.options = { ...this.options, ...options } as Player.options;
+
+    return new Proxy(this, {
+      set: (target: any, prop: string | symbol, value: any) => {
+        const isTargetArray = Array.isArray(target[prop]);
+        const isValueArray = Array.isArray(value);
+        const isTargetObject =
+          typeof target[prop] === "object" && !isTargetArray;
+        const isValueObject = typeof value === "object" && !isValueArray;
+
+        if (isTargetObject && isValueObject)
+          target[prop] = { ...target[prop], ...value };
+        else target[prop] = value;
+        this._changes$.next({ [prop]: value });
+        return true;
+      },
+    });
   }
 
-  public move(position: number, board: BoardService) {
-    const canMove = board.emptyCells.some((cell) => cell === position);
+  /**
+   *
+   *
+   * @memberof PlayerService
+   */
+  public reset(): void {
+    this.state = PlayerStates.in_game;
+    this.score = 0;
+    this.shuffleBuffer = 0;
+    this.canShuffle = false;
+  }
+
+  /**
+   *
+   *
+   * @static
+   * @param {Partial<PlayerService>} data
+   * @return {*}
+   * @memberof PlayerService
+   */
+  public static create(data: Partial<PlayerService>) {
+    const { displayName, uid, photoURL } = data;
+    if (displayName && uid && photoURL) {
+      const player = new PlayerService({ displayName, uid, photoURL });
+      player.sync(data);
+      return player;
+    } else {
+      throw new TypeError(
+        "One or more from displayName, uid or photoURL misses or are invalid"
+      );
+    }
+  }
+
+  /**
+   * Returns an object instance without observables
+   *
+   * @return {*}  {string}
+   * @memberof PlayerService
+   */
+  public toObject(): Record<string, any> {
+    return removeObservables(this);
+  }
+
+  public get nickName(): string {
+    return this.options.customName ?? this.displayName;
+  }
+
+  /**
+   *
+   *
+   * @param {*} data
+   * @memberof PlayerService
+   */
+  public sync(data: any): void {
+    if (!data) return;
+    const filteredFields = filterDifferentFields(this, data);
+
+    for (const [name, value] of Object.entries(filteredFields)) {
+      const isPublic = !name.startsWith("_");
+
+      if (isPublic) {
+        this[name as keyof this] = value;
+        continue;
+      } else {
+        const setterName = name.substr(1);
+        const proto = Object.getPrototypeOf(this);
+        const propertyDescriptors = Object.getOwnPropertyDescriptors(proto);
+        const hasSetter =
+          typeof propertyDescriptors[setterName]?.set === "function";
+        if (hasSetter) {
+          this[setterName as keyof this] = value;
+        } else {
+          this[name as keyof this] = value;
+        }
+      }
+    }
+  }
+
+  /**
+   *
+   *
+   * @memberof PlayerService
+   */
+  public subscribe(
+    callback: Partial<Observer<Partial<PlayerService>>> | ((data: any) => void)
+  ): Subscription {
+    const props =
+      typeof callback === "function"
+        ? {
+            next: callback,
+            error: (error: any) => {
+              throw error;
+            },
+          }
+        : Reflect.has(callback, "next")
+        ? callback
+        : undefined;
+    return this._changes$.subscribe(props);
+  }
+
+  /**
+   *
+   *
+   * @memberof PlayerService
+   */
+  public enableShuffling(): void {
+    this.canShuffle = true;
+  }
+
+  /**
+   *
+   *
+   * @memberof PlayerService
+   */
+  public disableShuffling(): void {
+    this.canShuffle = false;
+  }
+
+  /**
+   *
+   *
+   * @memberof PlayerService
+   */
+  public clearShuffleBuffer(): void {
+    this.shuffleBuffer = 0;
+  }
+
+  /**
+   *
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof PlayerService
+   */
+  public get isReady(): boolean {
+    return this.state === PlayerStates.ready;
+  }
+
+  /**
+   *
+   *
+   * @readonly
+   * @type {Player.isOwner}
+   * @memberof PlayerService
+   */
+  public get isOwner(): Player.isOwner {
+    return this.options.isOwner ?? false;
+  }
+
+  /**
+   * Update selected cell if empty and update the player state
+   * @param {Player.userId} uid
+   * @param {number} cellIndex
+   * @memberof MatchService
+   */
+  public moveOrShuffle(board: BoardService, action: number | "shuffle"): void {
+    if (action === "shuffle") {
+      this.state = PlayerStates.shuffling;
+    } else {
+      this._move(board, action);
+    }
+  }
+
+  /**
+   *
+   *
+   * @private
+   * @param {BoardService} board
+   * @param {number} cellIndex
+   * @memberof PlayerService
+   */
+  private _move(board: BoardService, cellIndex: number): void {
+    const canMove = board.emptyCells.some((cell) => cell === cellIndex);
+
     if (canMove) {
       try {
-        board.updateCell(position, { player: this.uid });
+        board.updateCell(cellIndex, { player: this.uid });
+        this.state = PlayerStates.last_to_move;
       } catch (err) {
         console.error(err);
         throw err;
       }
     } else {
-      throw new Error("Invalid position");
+      throw new Error("Bad position. Required cell is not empty");
     }
-  }
-
-  public get state(): PlayerStates {
-    return this._state;
-  }
-
-  public set state(value: PlayerStates) {
-    this._state = value;
-    this._changes$.next({ ["_state" as string]: this._state });
-  }
-
-  public set options(value: Partial<Player.options>) {
-    this._options = { ...this.options, ...value };
-    this._changes$.next({ ["_options" as string]: this._options });
-  }
-
-  public get options(): Player.options {
-    return this._options;
-  }
-
-  public set score(value: Player.score) {
-    this._score = value;
-    this._changes$.next({ ["_score" as string]: this._score });
-  }
-
-  public get score(): Player.score {
-    return this._score;
-  }
-
-  public get nickName(): string {
-    return this._options.customName ?? this.displayName;
-  }
-
-  public sync(data: any): void {
-    data && Object.assign(this, data);
-  }
-
-  public subscribe(callback: (data: Partial<PlayerService>) => void) {
-    this._changes$.subscribe((data) => callback(data));
   }
 }

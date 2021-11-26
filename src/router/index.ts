@@ -1,6 +1,8 @@
 import { Actions } from "@/helpers/enums/actions.enum";
 import { Getters } from "@/helpers/enums/getters.enum";
+import { MatchTypes } from "@/helpers/enums/match-types.enum";
 import { Mutations } from "@/helpers/enums/mutations.enum";
+import { Routes } from "@/helpers/enums/routes.enum";
 import store from "@/store";
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import { MutationPayload } from "vuex";
@@ -9,7 +11,7 @@ import Home from "../views/Home.vue";
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    name: "Home",
+    name: Routes.home,
     component: Home,
     meta: {
       requiresAuth: false,
@@ -25,15 +27,22 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: "room-code",
-        name: "RoomCode",
+        name: Routes.roomCode,
         component: () =>
           import(/* webpackChunkName: "match" */ "../views/Match/RoomCode.vue"),
       },
       {
         path: ":matchId/lobby",
-        name: "Lobby",
+        name: Routes.lobby
+        ,
         component: () =>
           import(/* webpackChunkName: "match" */ "../views/Match/Lobby.vue"),
+      },
+      {
+        path: ":matchId/game",
+        name: Routes.game,
+        component: () =>
+          import(/* webpackChunkName: "match" */ "../views/Match/Game.vue"),
       },
     ],
   },
@@ -45,9 +54,11 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-
+  // check for user authentication
   if (to.matched.some((record) => record.meta.requiresAuth)) {
-    if (store.getters[Getters.USER_IS_AUTHED]) {
+    const isPvP = to.params.matchType === MatchTypes.PLAYER_VS_PLAYER;
+    
+    if (!isPvP || store.getters[Getters.USER_IS_AUTHED]) {
       next();
     } else {
       store.dispatch(Actions.USER_REQUIRE_AUTH);

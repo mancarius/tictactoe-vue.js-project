@@ -8,9 +8,11 @@ import { Quasar } from "quasar";
 // @ts-ignore
 import quasarUserOptions from "./quasar-user-options";
 import match from "./plugins/match";
+import symbols from "./plugins/symbols";
 
 createApp(App)
   .use(match)
+  .use(symbols)
   .use(Quasar, quasarUserOptions)
   .use(router)
   .use(store)
