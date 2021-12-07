@@ -9,87 +9,100 @@ import { Actions } from '@/helpers/enums/actions.enum';
 import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
+import { Routes } from '@/helpers/enums/routes.enum';
+import { useStateHandler } from '@/injectables/state-handler';
 import { useMatch } from '@/plugins/match';
+import router from '@/router';
 import { useQuasar } from 'quasar';
-import { computed, defineComponent, onUnmounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, defineComponent, onMounted, onUnmounted, watch } from 'vue';
+import { onBeforeRouteLeave, useRoute } from 'vue-router';
 import { useStore } from 'vuex';
+import { State } from 'vuex/core';
 
 export default defineComponent({
   components: { },
 
   name:"MatchHome",
 
+  beforeRouteEnter (to, from, next) {
+    if(from.name === undefined)
+      next({name: Routes.home});
+    else
+      next(true);
+  },
+
   setup() {
     const match = useMatch();
-    const store = useStore();
-    const router = useRouter();
-    const { notify, dialog } = useQuasar();
-    const matchState = computed(() => store.getters[Getters.MATCH_STATE]);
-    const playerState = computed(() => store.getters[Getters.PLAYER_STATE]);
-    const opponentState = computed(() => store.getters[Getters.OPPONENT_STATE]);
+    const store = useStore<State>();
+    const { setMatchState, setPlayerState } = useStateHandler();
+    const { dialog, notify } = useQuasar();
+    const matchState = computed<MatchStates>(() => store.getters[Getters.MATCH_STATE]);
+    const playerState = computed<PlayerStates>(() => store.getters[Getters.PLAYER_STATE]);
 
-    watch([playerState, opponentState] ,([newPlayer, newOpponent], [oldPlayer, oldOpponent]) => {
-      if(newPlayer === oldPlayer && newOpponent === oldOpponent) return;
-      
-      if(match.service){
-        if(newPlayer === PlayerStates.in_game && newOpponent === PlayerStates.in_game)
-          match.service.state = MatchStates.in_play;
+    match.uid = store.getters[Getters.USER_DATA].uid;
 
-        else if(newPlayer === PlayerStates.ready && newOpponent === PlayerStates.ready)
-          match.service.state = MatchStates.match_ready;
+    onBeforeRouteLeave(async (to, from, next) => {
+      const {isRedirect} = to.params;
 
-        else if(newPlayer === PlayerStates.in_lobby || newOpponent === PlayerStates.in_lobby)
-          match.service.state = MatchStates.waiting_players_ready;
+      if (isRedirect !== undefined) {
+        next(true);
       } else {
-        notify({message: "Can't load match"});
-        router.push({name:"Home"});
+        const confirm: boolean = await new Promise((resolve) => {
+          dialog({
+            title: 'Confirm',
+            message: 'You are going to left the room. Are you sure?',
+            ok: {
+              color: 'primary'
+            },
+            cancel: {
+              color: "negative",
+              flat: true
+            },
+            focus: 'cancel',
+            persistent: true
+          }).onOk(() => {
+            resolve(true)
+          }).onCancel(() => 
+            resolve(false)
+          );
+        });
+
+        next(confirm);
       }
     });
 
-    watch([matchState, playerState], ([match_state, player_state]) => {
+    onUnmounted(() => {
+      setPlayerState(PlayerStates.disconnected);
+      // unsubscribe plugin subscriptions
+      match.subscriptions.forEach((subs) => subs());
+    });
 
+    onMounted(() => {
+      setMatchState(MatchStates.builded);
+    });
+
+    watch([matchState, playerState], ([match_state, player_state]) => {
       switch(match_state){
-        case MatchStates.match_ready:
+        case MatchStates.ready:
           if(player_state === PlayerStates.in_game) {
             store.dispatch(Actions.LOADING_START);
           }
           break;
+        case MatchStates.error:
+          store.dispatch(Actions.LOADING_START, "Closing room...");
+          notify({message: "Something goes wrong. You will be redirect to the home soon"});
+          setTimeout(() => {
+            router.push({ name: Routes.home, params:{ isRedirect: '1' }});
+          }, 3000);
+          break;
         default:
           store.dispatch(Actions.LOADING_STOP)
       }
-    });
+    }, {deep: true});
 
-    match.uid = store.getters[Getters.USER_DATA].uid;
-
-    onUnmounted(() => {
-      // unsubscribe plugin subscriptions
-      match.subscriptions.forEach((subs) => {
-        subs();
-      });
-    });
-
-    watch(() => store.getters[Getters.MATCH_EXIT], (current) => {
-      if(current) {
-        dialog({
-          title: 'Confirm',
-          message: 'Are you sure you want to left the room?',
-          ok: {
-            color: 'primary'
-          },
-          cancel: {
-            color: "negative",
-            flat: true
-          },
-          focus: 'cancel',
-          persistent: true
-        }).onOk(() => {
-          router.push({name:"Home"});
-        }).onDismiss(() => 
-          store.dispatch(Actions.MATCH_EXIT, false)
-        );
-      }
-    })
+    return {
+      matchState
+    }
   }
 })
 </script>

@@ -21,6 +21,7 @@ const routes: Array<RouteRecordRaw> = [
     path: "/match/:matchType",
     component: () =>
       import(/* webpackChunkName: "match" */ "../views/Match/index.vue"),
+    props: true,
     meta: {
       requiresAuth: true,
     },

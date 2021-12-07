@@ -43,25 +43,28 @@ export default defineComponent({
       id: any;
     }[]> = ref([]);
 
-    watch([matchState, playerState, opponentState], (next, previous) => {
+    watch([matchState, playerState, opponentState], (next, [prevMatchState]) => {
       const [m,p,o] = next;
 
-      if (o === PlayerStates.calculating_next_move) console.log('valvulating####################');
+      if(m === MatchStates.starting) {
+        addMessage({label: 'Waiting for opponent'}, true);
+      }
 
       if(m === MatchStates.started) {
         addMessage({label: 'Game start'}, true);
       }
 
-      if(m === MatchStates.waiting_player_move) {
+      if(m === MatchStates.waiting_for_player_move) {
         if (p === PlayerStates.moving) addMessage({text:'Moving...'}, true);
-        else if (o === PlayerStates.moving) addMessage({loading: true}, false);
-        else if (o === PlayerStates.calculating_next_move) addMessage({loading: true}, false);
+        else if (o === PlayerStates.moving || o === PlayerStates.calculating_next_move) addMessage({loading: true}, false);
       }
       
-      if(p === PlayerStates.shuffling) {
-        addMessage({text:'BOOM! SHAFFLING!'}, true);
-      } else if(o === PlayerStates.shuffling) {
-        addMessage({text:'BOOM! SHAFFLING!'}, false);
+      if(m === MatchStates.shaking_board) {
+        if(p === PlayerStates.shuffling) {
+          addMessage({text:'BOOM! SHAFFLING!'}, true);
+        } else if(o === PlayerStates.shuffling) {
+          addMessage({text:'BOOM! SHAFFLING!'}, false);
+        }
       }
 
       if(m === MatchStates.sequence_found) {

@@ -8,7 +8,14 @@ import * as Match from "@/types/match.interface";
 import * as Player from "@/types/player.interface";
 import User from "@/types/user.interface";
 import _ from "lodash";
-import { Observer, ReplaySubject, Subscription } from "rxjs";
+import {
+  combineLatest,
+  distinctUntilChanged,
+  Observer,
+  ReplaySubject,
+  Subject,
+  Subscription,
+} from "rxjs";
 import BoardService from "./board.service";
 import BotService from "./bot.service";
 import PlayerService from "./player.service";
@@ -21,14 +28,18 @@ export default class MatchService {
   public players: (PlayerService | BotService)[];
   public board: BoardService;
   public readonly type: MatchTypes = MatchTypes.PLAYER_VS_COMPUTER;
-  public state: Match.state = MatchStates.dormiant;
+  public state: Match.state = MatchStates.building;
   private _createdAt: any;
   public nextPlayerToMove: Player.userId | false = false;
   public useShuffling = true;
-  public shuffleActivationTarget = 9;
-  private _changes$: ReplaySubject<Partial<MatchService>> = new ReplaySubject(
-    1
-  );
+  public shuffleActivationTarget = 3;
+  public nextMatchId: number | null = null;
+  private _playersStates$ = [
+    new Subject<PlayerStates>(),
+    new Subject<PlayerStates>(),
+  ];
+  private _changes$: ReplaySubject<Partial<MatchService>> = new ReplaySubject();
+  private _lastUpdatedCells: number[] = [];
 
   constructor(
     players: [User, User?],
@@ -70,10 +81,147 @@ export default class MatchService {
     });
 
     proxy.board.subscribe((data) => {
-      proxy.boardSubscription.call(proxy, data);
+      data && proxy.boardSubscription.call(proxy, data);
+    });
+
+    combineLatest(proxy._playersStates$).subscribe((states) => {
+      proxy._stateHandler.call(proxy, states);
+    });
+
+    proxy.players.forEach((player, index) => {
+      player.subscribe((data) => {
+        const { state } = data;
+        state !== undefined && proxy._playersStates$[index].next(state);
+      });
     });
 
     return proxy;
+  }
+
+  /**
+   *
+   *
+   * @private
+   * @param {PlayerStates[]} [playerState, opponentState]
+   * @return {*}  {void}
+   * @memberof MatchService
+   */
+  private _stateHandler([p1State, p2State]: PlayerStates[]): void {
+    if (
+      p1State === PlayerStates.disconnected ||
+      p2State === PlayerStates.disconnected
+    ) {
+      this.state = MatchStates.waiting_players_ready;
+      return;
+    }
+
+    console.group("stateHandler");
+    console.log("before", {
+      matchState: this.state,
+      p1State,
+      p2State,
+    });
+
+    if (
+      /*
+       * Waiting player ready
+       */
+      p1State === PlayerStates.in_lobby ||
+      p2State === PlayerStates.in_lobby
+    ) {
+      this.state = MatchStates.waiting_players_ready;
+    } else if (
+      /*
+       * Ready
+       */
+      this.state === MatchStates.waiting_players_ready &&
+      PlayerService.isPlayerReady(p1State) &&
+      PlayerService.isPlayerReady(p2State)
+    ) {
+      this.state = MatchStates.ready;
+    } else if (
+      /*
+       * Starting
+       */
+      this.state === MatchStates.ready &&
+      (p1State === PlayerStates.ready || p1State === PlayerStates.in_game) &&
+      (p2State === PlayerStates.ready || p2State === PlayerStates.in_game)
+    ) {
+      this.state = MatchStates.starting;
+    } else if (
+      /*
+       * Started
+       */
+      p1State === PlayerStates.in_game &&
+      p2State === PlayerStates.in_game
+    ) {
+      this.state = MatchStates.started;
+    } else if (
+      /*
+       * Waiting for player move
+       */
+      this.state === MatchStates.started &&
+      (p1State === PlayerStates.in_game ||
+        p1State === PlayerStates.waiting_for_opponent_move ||
+        p1State === PlayerStates.moving ||
+        p1State === PlayerStates.next_to_move ||
+        p2State === PlayerStates.in_game ||
+        p2State === PlayerStates.waiting_for_opponent_move ||
+        p2State === PlayerStates.moving ||
+        p2State === PlayerStates.next_to_move)
+    ) {
+      this.state = MatchStates.waiting_for_player_move;
+    } else if (
+      /*
+       * Shaking board
+       */
+      this.state === MatchStates.waiting_for_player_move &&
+      (p1State === PlayerStates.shuffling || p2State === PlayerStates.shuffling)
+    ) {
+      this.state = MatchStates.shaking_board;
+    } else if (
+      /*
+       * Call checkLastUpdatedCells()
+       */
+      (this.state === MatchStates.waiting_for_player_move ||
+        this.state === MatchStates.shaking_board) &&
+      ((p1State === PlayerStates.last_to_move &&
+        p2State === PlayerStates.waiting_for_opponent_move) ||
+        (p1State === PlayerStates.waiting_for_opponent_move &&
+          p2State === PlayerStates.last_to_move))
+    ) {
+      this._lastUpdatedCells = this.board.lastUpdatedCells;
+      console.log("---------- AMMO", [...this._lastUpdatedCells]);
+      this.checkLastUpdatedCells();
+    } else if (
+      /*
+       * Sequence found
+       */
+      this.state === MatchStates.checking_sequence &&
+      (p1State === PlayerStates.score || p2State === PlayerStates.score)
+    ) {
+      this.state = MatchStates.sequence_found;
+    } else if (
+      /*
+       * Terminated
+       */
+      this.state === MatchStates.checking_game_status &&
+      (p1State === PlayerStates.winner ||
+        p1State === PlayerStates.loser ||
+        p1State === PlayerStates.draw) &&
+      (p2State === PlayerStates.winner ||
+        p2State === PlayerStates.loser ||
+        p2State === PlayerStates.draw)
+    ) {
+      this.state = MatchStates.terminated;
+    }
+
+    console.log("after", {
+      matchState: this.state,
+      p1State,
+      p2State,
+    });
+    console.groupEnd();
   }
 
   /**
@@ -82,7 +230,9 @@ export default class MatchService {
    * @return {*}  {string}
    * @memberof MatchService
    */
-  public toObject(): Record<string, any> {
+  public toObject(): {
+    [x: string]: any;
+  } {
     return removeObservables(this);
   }
 
@@ -94,10 +244,9 @@ export default class MatchService {
   public reset(): void {
     this.state = MatchStates.resetting;
     this.board.reset();
-    this.players.forEach(player => {
+    this.players.forEach((player) => {
       player.reset();
     });
-    this.state = MatchStates.in_play;
   }
 
   /**
@@ -108,13 +257,14 @@ export default class MatchService {
    */
   private async boardSubscription(data: { [key: string]: any }): Promise<void> {
     if (this.state === MatchStates.resetting) return;
-    
+
     const key = Object.keys(data)[0];
     const value: any = Object.values(data)[0];
 
     switch (key) {
       case "lastUpdatedCells":
-        await this.checkLastUpdatedCells();
+        // this._lastUpdatedCells = value;
+        // await this.checkLastUpdatedCells();
         break;
       default:
         return;
@@ -127,25 +277,57 @@ export default class MatchService {
    * @memberof MatchService
    */
   public async checkLastUpdatedCells(): Promise<void> {
-    const notEmptyStack = this.board.lastUpdatedCells.length > 0;
+    const notEmptyStack = this._lastUpdatedCells.length > 0;
 
     if (notEmptyStack) {
-      const lastUpdatedCellIndex =
-        this.board.lastUpdatedCells.shift() as number;
       try {
-        const result = await this._checkSequence(lastUpdatedCellIndex);
+        const result = await this._checkSequence(
+          this._lastUpdatedCells.shift()!
+        );
         result
           ? this._onSequenceFound(result)
           : await this._onSequenceNotFound();
-
-      } catch (error) {
+      } catch (error: any) {
         console.log(error);
+        throw new Error(error);
       }
     } else {
-      this._onSequenceNotFound();
+      await this._onSequenceNotFound();
     }
 
     return;
+  }
+
+  /**
+   * Verify if the given cell is part of a sequence
+   * @param cellIndex
+   * @returns
+   */
+  private async _checkSequence(
+    cellIndex: number
+  ): Promise<Board.WinningSequence | false> {
+    if (typeof cellIndex !== "number" || cellIndex < 0) return false;
+
+    this.state = MatchStates.checking_sequence;
+
+    const sequenceFinder = new SequenceFinderService(
+      this.board.configurations,
+      this.board.cells,
+      this.board.cells[cellIndex].player
+    );
+
+    const sequences = await sequenceFinder.allPassingSequences(
+      this.board.cells[cellIndex]
+    );
+
+    if (sequences.length && this.board.cells[cellIndex].player !== null) {
+      return {
+        player: this.board.cells[cellIndex].player as string,
+        sequence: sequences.flat(),
+      };
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -159,12 +341,16 @@ export default class MatchService {
     if (winningSequences) {
       const { player, sequence } = winningSequences;
       const filteredSequence = _.uniq(sequence);
+      const score = filteredSequence.length;
       this.board.winningSequence = { player, sequence: filteredSequence };
-      this.state = MatchStates.sequence_found;
-      this.useShuffling && this._fillPlayerShuffleBuffer(player, filteredSequence.length);
+      this.getPlayer(player).state = PlayerStates.score;
+      this.getPlayer(player).score += score;
+      this.useShuffling &&
+        this._fillPlayerShuffleBuffer(player, filteredSequence.length);
     } else {
       throw new TypeError("Invalid sequence received");
     }
+    debugger
   }
 
   /**
@@ -190,13 +376,14 @@ export default class MatchService {
    * @memberof MatchService
    */
   private async _onSequenceNotFound(): Promise<void> {
-    const notEmptyStack = this.board.lastUpdatedCells.length > 0;
+    const emptyStack = this._lastUpdatedCells.length === 0;
 
-    if (notEmptyStack) {
-      await this.checkLastUpdatedCells().catch((error) => console.log(error));
-    } else {
-      this._checkGameStatus();
-    }
+    if (emptyStack) this._checkGameStatus();
+    else
+      await this.checkLastUpdatedCells().catch((error) => {
+        console.error(error);
+        this.state = MatchStates.error;
+      });
 
     return;
   }
@@ -208,50 +395,36 @@ export default class MatchService {
    * @memberof MatchService
    */
   private _checkGameStatus() {
-    this.state = MatchStates.waiting_player_move;
+    this.state = MatchStates.checking_game_status;
 
     const existsEmptyCells = this.board.emptyCells.length > 0;
+    const nextPlayer = this.players.filter(
+      (player) => player.state === PlayerStates.next_to_move
+    )[0];
+
     if (existsEmptyCells) {
-      this.state = MatchStates.waiting_player_move;
+      //nextPlayer.state = PlayerStates.waiting_for_opponent_move;
+      this.state = MatchStates.waiting_for_player_move;
     } else {
-      const nextPlayer = this.players.filter(player => player.state === PlayerStates.next_to_move)[0];
       const canNextPlayerShuffle = nextPlayer.canShuffle;
       if (canNextPlayerShuffle) {
-        this.state = MatchStates.waiting_player_move;
+        this.state = MatchStates.waiting_for_player_move;
       } else {
-        this.state = MatchStates.terminated;
+        const [scorePlayer1, scorePlayer2] = this.players.map(
+          (player) => player.score
+        );
+
+        if (scorePlayer1 > scorePlayer2) {
+          this.players[0].state = PlayerStates.winner;
+          this.players[1].state = PlayerStates.loser;
+        } else if (scorePlayer1 < scorePlayer2) {
+          this.players[1].state = PlayerStates.winner;
+          this.players[0].state = PlayerStates.loser;
+        } else {
+          this.players[1].state = PlayerStates.draw;
+          this.players[0].state = PlayerStates.draw;
+        }
       }
-    }
-  }
-
-  /**
-   * Verify if the given cell is part of a sequence
-   * @param cellIndex
-   * @returns
-   */
-  private async _checkSequence(
-    cellIndex: number
-  ): Promise<Board.WinningSequence | false> {
-    if (typeof cellIndex !== "number" || cellIndex < 0) return false;
-    this.state = MatchStates.checking_sequence;
-
-    const sequenceFinder = new SequenceFinderService(
-      this.board.configurations,
-      this.board.cells,
-      this.board.cells[cellIndex].player
-    );
-
-    const sequences = await sequenceFinder.allPassingSequences(
-      this.board.cells[cellIndex]
-    );
-
-    if (sequences.length && this.board.cells[cellIndex].player !== null) {
-      return {
-        player: this.board.cells[cellIndex].player as string,
-        sequence: sequences.flat(),
-      };
-    } else {
-      return false;
     }
   }
 
@@ -313,9 +486,12 @@ export default class MatchService {
 
     newMatch.sync(match);
 
-    newMatch.players.forEach((player: PlayerService | undefined) => {
+    newMatch.players.forEach((player: PlayerService | undefined, index) => {
       if (!(player instanceof PlayerService))
         throw new TypeError("Bad instance of PlayerService");
+      else {
+        newMatch.players[index].sync(players[index]);
+      }
     });
 
     if (!(newMatch.board instanceof BoardService))
@@ -331,7 +507,7 @@ export default class MatchService {
    * @param {*} data
    * @memberof MatchService
    */
-  public sync(data: any): void {
+  public sync(data: { [x: string]: any }): void {
     if (!data) return;
 
     const filteredFields = filterDifferentFields(this, data);
@@ -401,6 +577,10 @@ export default class MatchService {
         throw new Error("Reached the maximum number of players");
       else {
         this.players.push(new PlayerService(user, options));
+        this.players[1].subscribe((data) => {
+          const { state } = data;
+          state && this._playersStates$[1].next(state);
+        });
       }
     }
 
@@ -425,7 +605,9 @@ export default class MatchService {
         : Reflect.has(callback, "next")
         ? callback
         : undefined;
-    return this._changes$.subscribe(props);
+    return this._changes$
+      .pipe(distinctUntilChanged((prev, curr) => _.isEqual(prev, curr)))
+      .subscribe(props);
   }
 
   /**

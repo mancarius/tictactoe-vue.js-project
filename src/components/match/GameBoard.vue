@@ -17,16 +17,16 @@
 <script lang="ts">
 import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
+import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
+import { useStateHandler } from '@/injectables/state-handler';
 import { useMatch } from '@/plugins/match';
 import { useSymbols } from '@/plugins/symbols';
 import { SymbolCode } from '@/plugins/symbols/types/symbols-plugin.interface';
-import { WinningSequence } from '@/types/board-types.interface';
 import _ from 'lodash';
 import { useQuasar } from 'quasar';
 import { computed, defineComponent, reactive, ref, watch } from 'vue'
 import { useStore } from 'vuex';
-import { useStateUtilities } from '@/mixins/setPlayerState'
 import cell from './cell.vue'
 
 export default defineComponent({
@@ -43,6 +43,7 @@ export default defineComponent({
     const columns = match.service?.board.configurations.columns ?? 0;
     const cells = computed(() => match.service?.board.cells);
     const loading = reactive({ visible: true, label: '' });
+    const matchType = match.service?.type;
     const matchState = computed(() => store.getters[Getters.MATCH_STATE]);
     const playerState = computed(() => store.getters[Getters.PLAYER_STATE]);
     const opponentState = computed(() => store.getters[Getters.OPPONENT_STATE]);
@@ -50,18 +51,17 @@ export default defineComponent({
     const playerSymbolURL = symbols.getFullPath(playerSymbolCode as SymbolCode);
     const opponentSymbolCode = match.opponent?.options.sign;
     const opponentSymbolURL = symbols.getFullPath(opponentSymbolCode as SymbolCode);
-    const canMoveTemplate = [MatchStates.waiting_player_move, PlayerStates.waiting_for_opponent_move];
+    const canMoveTemplate = [MatchStates.waiting_for_player_move, PlayerStates.waiting_for_opponent_move];
     const canMove = ref(false);
-    const gameStartTemplate = [MatchStates.in_play, PlayerStates.in_game,PlayerStates.in_game];
     const isBotFindingNextMove = ref(false);
     const isWinningSequence = ref(false);
     const classes = computed(() => ({
       ['cols'+columns]: true, 
       disabled: !canMove.value
     }));
-    const {setPlayerState, setOpponentState, setMatchState} = useStateUtilities();
+    const {setPlayerState, setOpponentState, setMatchState} = useStateHandler();
 
-    watch(matchState, (next, previous) => {
+    watch(matchState, (next) => {
 
       isWinningSequence.value = next === MatchStates.sequence_found;
 
@@ -71,26 +71,17 @@ export default defineComponent({
         shuffle();
       }
 
-      if(next === MatchStates.terminated) {
-        setMatchWinner();
-      }
-
-    });
+    }, {deep: true});
 
     watch([opponentState, matchState], ([nextOpponentState, nextMatchState], [oldOpponentState, oldMatchState]) => {
       
       canMove.value = _.isEqual([nextMatchState, nextOpponentState], canMoveTemplate);
 
       isBotFindingNextMove.value = nextOpponentState === PlayerStates.calculating_next_move;
-    });
+    }, {deep: true});
 
     watch(canMove, (next) => {
       next && setPlayerState(PlayerStates.moving)
-    });
-
-    watch(isBotFindingNextMove, (next) => {
-      console.log('isBotFindingNextMove', next)
-      next ? openLoading() : closeLoading;
     });
 
     watch(isWinningSequence, (next) => {
@@ -98,27 +89,11 @@ export default defineComponent({
 
       if(next && winningSequence) {
         setTimeout(() => {
-          updatePlayerScore(winningSequence);
           clearWinningCells();
           checkLastUpdatedCells();
         }, 2000);
       }
     });
-
-    function setMatchWinner() {
-      if( match.player && match.opponent ) {
-        if (match.player.score > match.opponent.score) {
-          setPlayerState(PlayerStates.winner);
-          setOpponentState(PlayerStates.loser);
-        } else if (match.player.score < match.opponent.score) {
-          setPlayerState(PlayerStates.loser);
-          setOpponentState(PlayerStates.winner);
-        } else {
-          setPlayerState(PlayerStates.draw);
-          setOpponentState(PlayerStates.draw);
-        }
-      }
-    }
 
     function checkLastUpdatedCells() {
       if( match.service ) {
@@ -129,7 +104,13 @@ export default defineComponent({
     function shuffle() {
       setTimeout(() => {
         if(match.service) {
-          match.service.board.shuffleCells();
+          if(playerState.value === PlayerStates.shuffling) {
+            match.service.board.shuffleCells();
+            setPlayerState(PlayerStates.last_to_move);
+          } else if(matchType === MatchTypes.PLAYER_VS_COMPUTER) {
+            match.service.board.shuffleCells();
+            setOpponentState(PlayerStates.last_to_move);
+          }
         }
       }, 2000);
     }
@@ -138,16 +119,15 @@ export default defineComponent({
       states: [MatchStates, PlayerStates, PlayerStates], 
     ) {
       const [nextMatchState, nextPlayerState, nextOpponentState] = states;
-      const isGameStart = _.isEqual([nextMatchState, nextPlayerState, nextOpponentState], gameStartTemplate);
+      const isGameStart = nextMatchState === MatchStates.started;
 
       console.log(...states);
 
       if (isGameStart) {
         const isOwner = match.player?.isOwner ?? false;
         isOwner && setFirstMove();
-        setMatchState(MatchStates.waiting_player_move);
       } else {
-        const isPossibleToMove = nextMatchState === MatchStates.waiting_player_move;
+        const isPossibleToMove = nextMatchState === MatchStates.waiting_for_player_move;
         isPossibleToMove 
           ? setTurn(nextPlayerState, nextOpponentState) 
           : prepareNextTurn(nextPlayerState, nextOpponentState)
@@ -162,8 +142,8 @@ export default defineComponent({
     }
 
     function setTurn(playerState: PlayerStates, opponentState: PlayerStates) {
-      const isPlayerTurn = playerState === PlayerStates.next_to_move || opponentState === PlayerStates.waiting_for_opponent_move;
-      const isOpponentTurn = opponentState === PlayerStates.next_to_move || playerState === PlayerStates.waiting_for_opponent_move;;
+      const isPlayerTurn = playerState === PlayerStates.next_to_move || opponentState === PlayerStates.waiting_for_opponent_move || opponentState === PlayerStates.last_to_move;
+      const isOpponentTurn = opponentState === PlayerStates.next_to_move || playerState === PlayerStates.waiting_for_opponent_move || playerState === PlayerStates.last_to_move;
       if (isOpponentTurn) {
         setOpponentState(PlayerStates.moving);
         setPlayerState(PlayerStates.waiting_for_opponent_move);
@@ -179,23 +159,6 @@ export default defineComponent({
       } catch(error: any) {
         console.error(error);
         notify({message: error.message || "An error occured"});
-      }
-    }
-
-    function openLoading(message = '') {
-      loading.label = message;
-      loading.visible = true;
-    }
-
-    function closeLoading() {
-      loading.visible = false;
-    }
-
-    function updatePlayerScore(winningSequence: WinningSequence) {
-      if(winningSequence) {
-        const { player, sequence } = winningSequence;
-        const score = sequence.length;
-        match.service && (match.service.getPlayer(player).score += score);
       }
     }
 

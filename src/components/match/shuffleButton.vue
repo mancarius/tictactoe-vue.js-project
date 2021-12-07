@@ -5,8 +5,9 @@
 <script lang="ts">
 import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
+import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
-import { useStateUtilities } from '@/mixins/setPlayerState';
+import { useStateHandler } from '@/injectables/state-handler';
 import { useMatch } from '@/plugins/match'
 import BotService from '@/services/bot.service';
 import PlayerService from '@/services/player.service';
@@ -16,8 +17,9 @@ import { useStore } from 'vuex';
 export default defineComponent({
   setup() {
     const match = useMatch();
-    const {setMatchState, setPlayerState, setOpponentState} = useStateUtilities();
+    const {setPlayerState, setOpponentState} = useStateHandler();
     const store = useStore();
+    const matchType = match.service?.type;
     const matchState = computed(() => store.getters[Getters.MATCH_STATE]);
     const playerState = computed(() => store.getters[Getters.PLAYER_STATE]);
     const opponentState = computed(() => store.getters[Getters.OPPONENT_STATE]);
@@ -27,10 +29,10 @@ export default defineComponent({
       shufflingHandler(next, previous);
     });
 
-    watch(matchState, (next, previous) => {
+    watch(matchState, (next) => {
       if(next === MatchStates.shaking_board) {
         if(opponentState.value === PlayerStates.shuffling) {
-          setOpponentState(PlayerStates.last_to_move);
+          //setOpponentState(PlayerStates.last_to_move);
         }
       }
     })
@@ -38,21 +40,14 @@ export default defineComponent({
     function shuffle() {
       if(canShuffle.value && match.player) {
         setPlayerState(PlayerStates.shuffling);
-        setMatchState(MatchStates.shaking_board);
       }
     }
 
     function shufflingHandler(next: PlayerStates[], previous: PlayerStates[]): void {
-      const [nextPlayerState, nextOpponentState] = next;
       const [previousPlayerState, previousOpponentState] = previous;
-      console.log({previousPlayerState, nextPlayerState});
 
-      if(nextOpponentState === PlayerStates.shuffling) {
-        setMatchState(MatchStates.shaking_board)
-      } else if(previousPlayerState === PlayerStates.shuffling) {
+      if(previousPlayerState === PlayerStates.shuffling) {
         match.player && clearAndDisablePlayerShuffling(match.player);
-      } else if(previousOpponentState === PlayerStates.shuffling) {
-        match.opponent && clearAndDisablePlayerShuffling(match.opponent);
       }
     }
 

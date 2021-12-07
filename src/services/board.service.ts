@@ -3,8 +3,11 @@ import removeObservables from "@/helpers/removeObservables";
 import * as Board from "@/types/board-types.interface";
 import Player from "@/types/player.interface";
 import _ from "lodash";
-import { Observer, ReplaySubject, Subscription } from "rxjs";
-
+import {
+  Observer,
+  ReplaySubject,
+  Subscription,
+} from "rxjs";
 
 export default class BoardService {
   private _changes$: ReplaySubject<Partial<BoardService>> = new ReplaySubject(
@@ -19,7 +22,7 @@ export default class BoardService {
 
   protected _cellCollection: Board.cell[] = [];
 
-  public lastUpdatedCells: number[] = [];
+  public _lastUpdatedCells: number[] = [];
 
   public winningSequence: Board.WinningSequence = false;
 
@@ -30,7 +33,7 @@ export default class BoardService {
     return new Proxy(this, {
       get: (target: BoardService, prop: string | symbol, receiver: any) => {
         //remove empty cells from lastUpdatedCells
-        if (prop === "lastUpdatedCells") {
+        if (prop === "_lastUpdatedCells") {
           target[prop] = target[prop].filter(
             (cellIndex: number) =>
               target["_cellCollection"][cellIndex].player !== null
@@ -49,7 +52,9 @@ export default class BoardService {
           prop,
           isObject ? { ...Reflect.get(target, prop), ...value } : value
         );
-        this._changes$.next({ [prop]: value });
+
+        if (prop === "_cellCollection")
+          this._changes$.next({ [prop as string]: value as Board.cell[] });
 
         return true;
       },
@@ -81,7 +86,9 @@ export default class BoardService {
    * @return {*}  {string}
    * @memberof BoardService
    */
-  public toObject(): Record<string, any> {
+  public toObject(): {
+    [x: string]: any;
+  } {
     return removeObservables(this);
   }
 
@@ -118,7 +125,7 @@ export default class BoardService {
    */
   public reset(): void {
     this._initCells();
-    this.lastUpdatedCells = [];
+    this._lastUpdatedCells = [];
     this.winningSequence = false;
   }
 
@@ -167,7 +174,34 @@ export default class BoardService {
       this._cellCollection
     );
 
-    this.lastUpdatedCells = [index];
+    this._lastUpdatedCells = [index];
+  }
+
+  /**
+   *
+   *
+   * @memberof BoardService
+   */
+  public get lastUpdatedCells() {
+    return this._lastUpdatedCells;
+  }
+
+  /**
+   *
+   *
+   * @memberof BoardService
+   */
+  public static getUpdatedCells(
+    base: Board.cell[],
+    source: Board.cell[]
+  ): number[] {
+    const temp: number[] = [];
+
+    base.forEach((cell, index) => {
+      if (cell.player !== source[index].player) temp.push(index);
+    });
+
+    return temp;
   }
 
   /**
@@ -177,16 +211,20 @@ export default class BoardService {
    */
   public shuffleCells(): void {
     const tempCells = _.shuffle(this.cells);
+
     this._cellCollection = this._cellCollection.map((cell, index) => {
       return { ...cell, player: tempCells[index].player };
-    })
+    });
+
     const notEmptyCells: number[] = [];
+
     this.cells.forEach(({ player }, index) => {
       if (typeof player === "string") {
         notEmptyCells.push(index);
       }
     });
-    this.lastUpdatedCells = notEmptyCells;
+
+    this._lastUpdatedCells = notEmptyCells;
   }
 
   /**
@@ -331,12 +369,21 @@ export default class BoardService {
    *
    * @param data
    */
-  public sync(data: any): void {
+  public sync(data: { [x: string]: any }): void {
     if (!data) return;
     const filteredFields = filterDifferentFields(this, data);
 
+    console.log("[receive]", data, "filteredFields", filteredFields);
+
     for (const [name, value] of Object.entries(filteredFields)) {
       const isPublic = !name.startsWith("_");
+
+      if (name === "_cellCollection") {
+        this._lastUpdatedCells = BoardService.getUpdatedCells(
+          this.cells,
+          value
+        );
+      }
 
       if (isPublic) {
         this[name as keyof this] = value;
@@ -360,12 +407,15 @@ export default class BoardService {
    *
    */
   public subscribe(
-    callback: Partial<Observer<Partial<BoardService>>> | ((data: any) => void)
+    callback:
+      | Partial<Observer<Partial<BoardService> | undefined>>
+      | ((data: Partial<BoardService> | undefined) => void)
   ): Subscription {
     const props =
       typeof callback === "function"
         ? {
-            next: callback,
+            next: (data: Partial<BoardService> | undefined) =>
+              data && callback(data),
             error: (error: any) => {
               throw error;
             },
@@ -373,6 +423,7 @@ export default class BoardService {
         : Reflect.has(callback, "next")
         ? callback
         : undefined;
+
     return this._changes$.subscribe(props);
   }
 }

@@ -6,7 +6,7 @@
         </div>
         <div>
           <q-btn v-if="isUserAuthed" class="browser-default" round>
-            <avatar-vue :src="user.photoURL" />
+            <avatar-vue :src="user.photoURL" class="dontApplyDark" />
             <q-menu :offset="[0, 10]">
               <q-list separator>
                 <q-item clickable v-ripple v-close-popup to="/account/settings" exact>

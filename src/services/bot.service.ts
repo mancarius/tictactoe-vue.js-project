@@ -27,25 +27,28 @@ export default class BotService extends PlayerService {
     };
 
     super(bot, options);
-    this.state = PlayerStates.ready;
+    this.state = PlayerStates.none;
     this._board = board;
     this._opponent = opponent;
     this._bestOpponentMoves = new BestMoveFinder(this._board, this._opponent);
+
     this._opponent.subscribe({
       next: (data) => {
         const name = Object.keys(data)[0];
         const value = Object.values(data)[0];
 
         switch (name) {
-          case "state":
-            if (value == PlayerStates.in_game) {
-              this.state = value;
-            } else if (value == PlayerStates.ready) {
-              this.state = value;
-            } else if (value == PlayerStates.disconnected) {
-              this.state = value;
-            }
+          case "state": {
+            const matched = [
+              PlayerStates.in_lobby,
+              PlayerStates.ready,
+              PlayerStates.in_game,
+              PlayerStates.disconnected,
+            ].some((state) => state === value);
+
+            matched && (this.state = value as PlayerStates);
             break;
+          }
           default:
             break;
         }
@@ -64,6 +67,9 @@ export default class BotService extends PlayerService {
           case "state":
             if (value == PlayerStates.moving) {
               this._moveOrShuffle();
+            } else if (value == PlayerStates.shuffling) {
+              this.clearShuffleBuffer();
+              this.disableShuffling();
             }
             break;
           default:
@@ -116,7 +122,9 @@ export default class BotService extends PlayerService {
   /**
    *
    *
-   * @return {*}
+   * @param {(Move[] | null)} bestOpponentMoves
+   * @param {number} [delay=0] the minimum delay in ms before method return
+   * @return {*}  {(Promise<number | "shuffle" | null>)}
    * @memberof BotService
    */
   public async getNextMove(
@@ -191,12 +199,22 @@ export default class BotService extends PlayerService {
       ? opponentBestMove.path.length
       : null;
 
+    const opponentCellsLength = this._board.getPlayerCells(
+      this._opponent.uid
+    ).length;
+
     if (!playerMinMovesToWin) {
-      if (opponentMoves && opponentMoves?.length > 1 && this.canShuffle) {
+      if (
+        opponentMoves &&
+        opponentMoves?.length > 1 &&
+        opponentCellsLength > 1 &&
+        this.canShuffle
+      ) {
         return "shuffle";
       }
       return opponentBestMove;
     }
+
     if (!opponenetMinMovesToWin) return playerBestMove;
 
     return playerMinMovesToWin > opponenetMinMovesToWin

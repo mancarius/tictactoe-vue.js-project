@@ -107,30 +107,31 @@ export default defineComponent({
   mounted() {
     const { matchType } = this.$route.params;
     
-    this.$match.create(store.getters[Getters.USER_DATA], matchType as MatchTypes).then(() => {
-      if(!(this.$match.service instanceof MatchService))
-        throw new Error("Bad match service");
-      else {
-        // sync match and layer state in store
-        this.$match.service?.subscribe(({state}) => {
-          if(state !== undefined) store.dispatch(Actions.MATCH_SET_STATE, state);
-        });
-        this.$match.player?.subscribe(({state}) => {
-          if(state !== undefined) store.dispatch(Actions.PLAYER_SET_STATE, state);
-        });
+    this.$match.create(store.getters[Getters.USER_DATA], matchType as MatchTypes)
+      .then(() => {
+        if(!(this.$match.service instanceof MatchService))
+          throw new Error("Bad match service");
+        else {
+          // sync match and layer state in store
+          this.$match.service?.subscribe(({state}) => {
+            if(state !== undefined) store.dispatch(Actions.MATCH_SET_STATE, state);
+          });
+          this.$match.player?.subscribe(({state}) => {
+            if(state !== undefined) store.dispatch(Actions.PLAYER_SET_STATE, state);
+          });
 
-        store.dispatch(Actions.LOADING_STOP);
+          store.dispatch(Actions.LOADING_STOP);
 
-        if(matchType === MatchTypes.PLAYER_VS_PLAYER)
-          this.render = true;
-      }
-    })
-    .catch (error => {
-      console.error(error);
-      const { notify } = useQuasar();
-      notify({message: "I can't build the room now."});
-      this.$router.push({name: "Home"});
-    });
+          if(matchType === MatchTypes.PLAYER_VS_PLAYER)
+            this.render = true;
+        }
+      })
+      .catch (error => {
+        console.error(error);
+        const { notify } = useQuasar();
+        notify({message: "I can't build the room now."});
+        this.$router.push({name: "Home"});
+      });
   },
 
   unmounted() {

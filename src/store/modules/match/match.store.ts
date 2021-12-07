@@ -14,7 +14,6 @@ const matchStore: StoreOptions<any> = {
     opponent: {
       state: PlayerStates.none,
     },
-    exit: false,
   },
 
   getters,

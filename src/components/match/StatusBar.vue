@@ -1,12 +1,12 @@
 <template>
 <div class="status-bar-container">
     <div class="player-container left" :class="{ alpha: !isOpponentReady }">
-        <avatar-vue class="pic" :src="opponent?.photoURL" />
+        <avatar-vue class="pic dontApplyDark" :src="opponent?.photoURL" />
         <span class="name" :class="{active: isOpponentTurn}">{{opponentName}}</span>
     </div>
     <span class="divider">vs</span>
     <div class="player-container right">
-        <avatar-vue class="pic" :src="player?.photoURL" />
+        <avatar-vue class="pic dontApplyDark" :src="player?.photoURL" />
         <span class="name" :class="{active: isPlayerTurn}">You</span>
     </div>
 </div>

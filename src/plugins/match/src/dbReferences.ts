@@ -1,12 +1,24 @@
 import db from "@/helpers/db";
 import MatchService from "@/services/match.service";
-import { collection, doc, onSnapshot, query, Unsubscribe } from "@firebase/firestore";
+import {
+  collection,
+  doc,
+  DocumentReference,
+  onSnapshot,
+  query,
+  Unsubscribe,
+} from "@firebase/firestore";
 import { ReplaySubject } from "rxjs";
 import { dbReferences } from "../types/match-plugin.interface";
 
+let BASE_PATH = "";
+
 export const dbRef: dbReferences = {
   match: null,
-  board: null,
+  board: {
+    docs: {},
+    collection: null,
+  },
   players: {
     docs: new ReplaySubject(),
     collection: null,
@@ -22,15 +34,16 @@ export const dbRef: dbReferences = {
  * @param {*} receiver
  * @return {*}
  */
-export const setDbReferences = (value: MatchService["id"]): Unsubscribe => {
-  dbRef.match = doc(db, "matches", value);
-  dbRef.board = doc(db, "matches/" + value + "/board", "_");
-  dbRef.players.collection = collection(db, "matches/" + value + "/players");
+export const setDbReferences = (matchId: MatchService["id"]): Unsubscribe => {
+  BASE_PATH = "matches/" + matchId;
+  dbRef.match = doc(db, "matches", matchId);
+  dbRef.board.collection = collection(db, BASE_PATH, "board");
+  dbRef.players.collection = collection(db, BASE_PATH, "players");
 
-  const q = query(dbRef.players.collection);
+  const playersQuery = query(dbRef.players.collection);
   const playerDocs: any = {};
 
-  const unsubs = onSnapshot(q, (querySnapshot) => {
+  const unsubs = onSnapshot(playersQuery, (querySnapshot) => {
     querySnapshot.forEach((doc) => {
       playerDocs[doc.data().uid] = doc.ref;
       dbRef.players.docs.next(playerDocs);
@@ -42,4 +55,26 @@ export const setDbReferences = (value: MatchService["id"]): Unsubscribe => {
   });
 
   return unsubs;
+};
+
+export const createDocumentRef = (
+  collectionName: string,
+  docName: string
+): DocumentReference => {
+  if (BASE_PATH.match(/\S+\/\S+/g)?.length === 1) {
+    throw new TypeError("Invalid collection path");
+  }
+
+  if (
+    typeof collectionName !== "string" ||
+    collectionName.trim().length === 0
+  ) {
+    throw new TypeError("Invalid collection name");
+  }
+
+  if (typeof docName !== "string" || docName.trim().length === 0) {
+    throw new TypeError("Invalid document name");
+  }
+
+  return doc(db, BASE_PATH, collectionName, docName);
 };

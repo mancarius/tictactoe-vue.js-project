@@ -22,6 +22,8 @@ import { dbRef, setDbReferences } from "./dbReferences";
 import _ from "lodash";
 import removeObservables from "@/helpers/removeObservables";
 import { MatchStates } from "@/helpers/enums/match-states.enum";
+import PlayerService from "@/services/player.service";
+import BoardService from "@/services/board.service";
 
 export const defaultOptions: MatchPluginOptions = {
   storage: "localStorage",
@@ -68,7 +70,7 @@ export const match: MatchPlugin = {
       const afs_subscriptions = setDbReferences(this.service.id);
       this.subscriptions.push(afs_subscriptions);
 
-      if (!dbRef.match || !dbRef.board || !dbRef.players.collection)
+      if (!dbRef.match || !dbRef.board.collection || !dbRef.players.collection)
         throw new Error("Some Document Reference missing");
 
       let { players, board, ...match } = this.service;
@@ -93,7 +95,9 @@ export const match: MatchPlugin = {
         batch.set(docRef, removeObservables(player));
       });
 
-      batch.set(dbRef.board, removeObservables(board));
+      for (const [name, value] of Object.entries(removeObservables(board))) {
+        batch.set(doc(dbRef.board.collection, name), { name, value });
+      }
 
       try {
         await batch.commit();
@@ -116,23 +120,44 @@ export const match: MatchPlugin = {
    * @param id
    * @returns
    */
-  async find(id) {
+  async find(id): Promise<Partial<MatchService> | null> {
+    if (typeof id !== "string") {
+      throw new TypeError("Expected a 'string' but received " + typeof id);
+    } else if (id.trim().length === 0) {
+      throw new Error("Received an empty string");
+    }
+
     const matchRef = doc(db, "matches", id);
     const matchSnap = await getDoc(matchRef);
-    const match = matchSnap.data();
+    const match = matchSnap.data() as Partial<MatchService>;
+
+    if (
+      !match ||
+      match.state === MatchStates.terminated ||
+      match.state === MatchStates.closed_by_owner
+    ) {
+      return null;
+    }
 
     const path = "matches/" + id;
 
-    const boardRef = doc(db, path + "/board", "_");
-    const boardSnap = await getDoc(boardRef);
-    const board = boardSnap.data();
+    const boardRef = collection(db, path, "board");
+    const boardQuery = query(boardRef);
+    const boardSnap = await getDocs(boardQuery);
+    const board: BoardService = Object.create(null);
+    boardSnap.docs.forEach((doc) => {
+      const { name, value }: { [key: string]: any } = doc.data();
+      Reflect.set(board, name, value);
+    });
 
     const playersRef = collection(db, path + "/players");
-    const q = query(playersRef);
-    const playersSnap = await getDocs(q);
-    const players = playersSnap.docs.map((doc) => doc.data());
+    const playersQuery = query(playersRef);
+    const playersSnap = await getDocs(playersQuery);
+    const players = playersSnap.docs.map((doc) => doc.data() as PlayerService);
 
-    return { ...match, board, players };
+    if (board !== undefined) {
+      return { ...match, board, players };
+    } else throw new TypeError("Invalid board type received");
   },
 
   /**
@@ -141,8 +166,14 @@ export const match: MatchPlugin = {
    * @param user
    * @returns
    */
-  async join(matchId, user) {
+  async join(matchId, user): Promise<void> {
     if (!user) throw new Error("Bad user");
+
+    const match = await this.find(matchId);
+
+    if (!match) throw new Error("Room not avilable");
+
+    this.service = MatchService.create(match);
 
     if (!this.service || this.service.id !== matchId)
       throw new Error("Bad room code");
@@ -151,6 +182,8 @@ export const match: MatchPlugin = {
       const player = {
         ...this.service.join(user).toObject(),
       };
+
+      this.uid = player.uid;
 
       const path = "matches/" + matchId + "/players";
       const name = "player_" + user.uid;
@@ -179,7 +212,7 @@ export const match: MatchPlugin = {
    * @param userId
    * @returns
    */
-  async exit(uid) {
+  async exit(uid): Promise<void> {
     if (!(this.service instanceof MatchService)) return;
     const player = this.service?.getPlayer(uid);
     player.state = PlayerStates.disconnected;
@@ -191,7 +224,7 @@ export const match: MatchPlugin = {
    * @param {*} uid
    * @return {*}
    */
-  get player() {
+  get player(): PlayerService | null {
     if (this.service instanceof MatchService && this.uid)
       return this.service.getPlayer(this.uid);
     else return null;
@@ -203,7 +236,7 @@ export const match: MatchPlugin = {
    * @param {*} uid
    * @return {*}
    */
-  getPlayerIndex(uid) {
+  getPlayerIndex(uid): number {
     if (this.service instanceof MatchService)
       return this.service.players.findIndex((player) => player.uid === uid);
     else throw new Error("Match not valid");
@@ -215,7 +248,7 @@ export const match: MatchPlugin = {
    * @param {*} uid
    * @return {*}
    */
-  get opponent() {
+  get opponent(): PlayerService | null {
     if (this.service instanceof MatchService && this.uid)
       return this.service.players.filter(
         (player) => player.uid !== this.uid
@@ -229,7 +262,7 @@ export const match: MatchPlugin = {
    * @param {*} uid
    * @return {*}
    */
-  getOpponentIndex(uid) {
+  getOpponentIndex(uid): number {
     if (this.service instanceof MatchService)
       return this.service.players.findIndex((player) => player.uid !== uid);
     else throw new Error("Match not valid");
@@ -238,37 +271,36 @@ export const match: MatchPlugin = {
   /**
    *
    */
-  _subscribeRemote() {
+  _subscribeRemote(): void {
     if (!this.service) throw new Error("Found invalid service");
 
-    if (!dbRef.match || !dbRef.board || !dbRef.players.collection)
+    if (!dbRef.match || !dbRef.board.collection || !dbRef.players.collection)
       throw new Error("Some Document Reference missing");
 
+    // board subscription
+    const boardUnsubs = onSnapshot(
+      query(
+        dbRef.board.collection,
+        where("name", "in", ["_cellCollection", "lastUpdatedCells"])
+      ),
+      { includeMetadataChanges: true },
+      (docs) => {
+        docs.docChanges().forEach(({ doc }) => {
+          console.log("board changes", doc.data());
+          const { name, value } = doc.data();
+          this.service?.board.sync({ [name]: value });
+        });
+      },
+      (error) => {
+        console.error(error.message);
+      }
+    );
+    // opponent subscription
     const opponentQuery = query(
       dbRef.players.collection,
       where("uid", "!=", this.uid)
     );
-    // match subscribtion
-    const matchUnsubs = onSnapshot(
-      dbRef.match,
-      (doc) => {
-        this.service?.sync(doc.data());
-      },
-      (error) => {
-        console.error(error.message);
-      }
-    );
-    // board subscription
-    const boardUnsubs = onSnapshot(
-      dbRef.board,
-      (doc) => {
-        this.service?.board.sync(doc.data());
-      },
-      (error) => {
-        console.error(error.message);
-      }
-    );
-    // players subscription
+
     const opponentUnsubs = onSnapshot(
       opponentQuery,
       (snapshot) => {
@@ -288,14 +320,14 @@ export const match: MatchPlugin = {
       }
     );
 
-    this.subscriptions = [matchUnsubs, boardUnsubs, opponentUnsubs];
+    this.subscriptions = [boardUnsubs, opponentUnsubs];
   },
 
   /**
    *
    */
   _subscribeLocal() {
-    if (!dbRef.match || !dbRef.board || !dbRef.players.docs)
+    if (!dbRef.match || !dbRef.board.collection || !dbRef.players.docs)
       throw new Error("Some Document Reference missing");
 
     return {
@@ -310,9 +342,22 @@ export const match: MatchPlugin = {
 
       // board subscription
       board: () => {
-        this.service?.board.subscribe((data) => {
-          updateDoc(dbRef.board!, data);
-        });
+        this.service?.board.subscribe(
+          (data: Partial<BoardService> | undefined) => {
+            if (data === undefined) return;
+
+            if (dbRef.board.collection) {
+              const batch = writeBatch(db);
+              for (const [name, value] of Object.entries(data)) {
+                console.log("[send]", name, value);
+                batch.update(doc(dbRef.board.collection, name), { value });
+              }
+              batch.commit();
+            } else {
+              console.warn("Invalid board collection");
+            }
+          }
+        );
       },
 
       // player subscription
@@ -344,5 +389,13 @@ export const match: MatchPlugin = {
     } else {
       throw new Error("Bad match service");
     }
+  },
+
+  /**
+   *
+   *
+   */
+  reset() {
+    this.service?.reset();
   },
 };

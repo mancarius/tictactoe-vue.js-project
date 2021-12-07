@@ -1,9 +1,17 @@
 import { PlayerStates } from "@/helpers/enums/player-states.enum";
 import filterDifferentFields from "@/helpers/filterDifferentFields";
 import removeObservables from "@/helpers/removeObservables";
+import * as Board from "@/types/board-types.interface";
 import * as Player from "@/types/player.interface";
 import User from "@/types/user.interface";
-import { Observer, ReplaySubject, Subject, Subscription } from "rxjs";
+import _ from "lodash";
+import {
+  distinctUntilChanged,
+  Observer,
+  ReplaySubject,
+  Subject,
+  Subscription,
+} from "rxjs";
 import BoardService from "./board.service";
 import UserService from "./user.service";
 
@@ -13,10 +21,11 @@ export default class PlayerService extends UserService {
     customName: this.displayName,
     isOwner: false,
   };
-  public state: PlayerStates = PlayerStates.in_lobby;
+  public state: PlayerStates = PlayerStates.none;
   public score: Player.score = 0;
   public shuffleBuffer = 0;
   public canShuffle = false;
+  public lastAction: number | 'shuffle' | undefined;
   private _changes$: Subject<Partial<PlayerService>> = new ReplaySubject(1);
 
   constructor(user: User, options?: Partial<Player.options>) {
@@ -81,7 +90,7 @@ export default class PlayerService extends UserService {
    * @return {*}  {string}
    * @memberof PlayerService
    */
-  public toObject(): Record<string, any> {
+  public toObject(): { [x: string]: any } {
     return removeObservables(this);
   }
 
@@ -95,7 +104,7 @@ export default class PlayerService extends UserService {
    * @param {*} data
    * @memberof PlayerService
    */
-  public sync(data: any): void {
+  public sync(data: { [x: string]: any }): void {
     if (!data) return;
     const filteredFields = filterDifferentFields(this, data);
 
@@ -139,7 +148,9 @@ export default class PlayerService extends UserService {
         : Reflect.has(callback, "next")
         ? callback
         : undefined;
-    return this._changes$.subscribe(props);
+    return this._changes$
+      .pipe(distinctUntilChanged((prev, curr) => _.isEqual(prev, curr)))
+      .subscribe(props);
   }
 
   /**
@@ -177,7 +188,29 @@ export default class PlayerService extends UserService {
    * @memberof PlayerService
    */
   public get isReady(): boolean {
-    return this.state === PlayerStates.ready;
+    return PlayerService.isPlayerReady(this.state);
+  }
+
+  /**
+   *
+   *
+   * @static
+   * @param {PlayerStates} state
+   * @return {*}  {boolean}
+   * @memberof PlayerService
+   */
+  public static isPlayerReady(state: PlayerStates): boolean {
+    const readyStates = [
+      PlayerStates.ready,
+      PlayerStates.in_game,
+      PlayerStates.moving,
+      PlayerStates.next_to_move,
+      PlayerStates.score,
+      PlayerStates.shuffling,
+      PlayerStates.waiting_for_opponent_move,
+      PlayerStates.waiting_for_opponent_join,
+    ];
+    return readyStates.some((test) => test === state);
   }
 
   /**
@@ -198,6 +231,7 @@ export default class PlayerService extends UserService {
    * @memberof MatchService
    */
   public moveOrShuffle(board: BoardService, action: number | "shuffle"): void {
+    this.lastAction = action;
     if (action === "shuffle") {
       this.state = PlayerStates.shuffling;
     } else {

@@ -22,12 +22,17 @@ export interface MatchPluginOptions {
 
 export interface dbReferences {
   match: DocumentReference<DocumentData> | null;
-  board: DocumentReference<DocumentData> | null;
+  board: {
+    collection: CollectionReference | null;
+    docs: {
+      [key: string]: DocumentReference<DocumentData>;
+    };
+  };
   players: {
     docs: ReplaySubject<{ [key: string]: DocumentReference<DocumentData> }>;
     collection: CollectionReference | null;
   };
-};
+}
 
 export default interface MatchPlugin {
   options: MatchPluginOptions;
@@ -63,8 +68,11 @@ export default interface MatchPlugin {
   _subscribeLocal(): {
     match(): void;
     board(): void;
+    //cells(): void;
     player(uid: Player["uid"]): void;
   };
 
   setFirstMove(): void;
+
+  reset(): void;
 }

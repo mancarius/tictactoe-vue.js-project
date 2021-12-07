@@ -21,14 +21,14 @@ import ShuffleButton from '@/components/match/shuffleButton.vue';
 import StatusBar from '@/components/match/StatusBar.vue';
 import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
-import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
 import { Routes } from '@/helpers/enums/routes.enum';
+import { useStateHandler } from '@/injectables/state-handler';
 import { useMatch } from '@/plugins/match';
 import _ from 'lodash';
 import { useQuasar } from 'quasar';
-import { computed, defineComponent, onBeforeUnmount, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, defineComponent, onBeforeMount, onBeforeUnmount, onMounted, watch } from 'vue';
+import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
 export default defineComponent({
@@ -40,50 +40,78 @@ export default defineComponent({
     const match = useMatch();
     const router = useRouter();
     const store = useStore();
-    const { notify, dialog } = useQuasar();
+    const { setMatchState, setPlayerState } = useStateHandler();
+    const { dialog } = useQuasar();
     const useShuffling = match.service?.useShuffling;
     const matchState = computed(() => store.getters[Getters.MATCH_STATE]);
+    const playerState = computed(() => store.getters[Getters.PLAYER_STATE]);
     const isOwner = match.player?.isOwner as boolean;
 
     watch(matchState, (next) => {
-      if( next === MatchStates.terminated && isOwner ) {
-        dialog({
-          title: 'And now?',
-          message: 'What you want to do now?',
-          ok: {
-            label: "Play again",
-            color: "primary",
-          },
-          cancel: {
-            label: "Exit",
-            color: "negative"
-          },
-          focus: 'ok',
-          persistent: true
-        }).onOk(() => {
-          match.service && match.service.reset();
-        }).onCancel(() => {
-          router.push({name: Routes.home})
-        }).onDismiss(() => {/**/});
+      if( next === MatchStates.terminated) {
+        const dialogTitle = playerState.value === PlayerStates.winner 
+          ? "Awesome! You win!" 
+          : playerState.value === PlayerStates.loser
+            ? "You lose"
+            : "Draw";
+
+        if( isOwner ) {
+          // owner dialog
+          dialog({
+            title: dialogTitle,
+            message: 'What you want to do now?',
+            ok: {
+              label: "Play again",
+              color: "primary",
+            },
+            cancel: {
+              label: "Exit",
+              color: "negative"
+            },
+            focus: 'ok',
+            persistent: true
+          }).onOk(() => {
+            match.service && match.reset();
+          }).onCancel(() => {
+            setMatchState(MatchStates.closed_by_owner);
+            router.push({name: Routes.home})
+          }).onDismiss(() => {/**/});
+        } else {
+          // host dialog
+          dialog({
+            title: dialogTitle,
+            message: "If you want to play again wait for room owner to restart the game, else exit the room.",
+            cancel: {
+              label: "Exit",
+              color: "negative"
+            },
+            persistent: true
+          }).onCancel(() => {
+            setMatchState(MatchStates.closed_by_owner);
+            router.push({name: Routes.home})
+          })
+        }
       }
     });
 
     onMounted(() => {
-      if(match.player){
-        setPlayerState(PlayerStates.in_game);
-      } else {
-        notify({message: "Can't load player"});
-        router.push({name:"Home"});
-      }
+      setPlayerState(PlayerStates.in_game);
     });
 
     onBeforeUnmount(() => {
       setPlayerState(PlayerStates.disconnected);
     })
 
-    function setPlayerState(state: PlayerStates) {
-      match.player && (match.player.state = state);
-    }
+    onBeforeRouteLeave((to, from, next) => {
+      // if press history back button, redirect to Home to trigger confirmation pop-up located Match view
+      if(to.name === Routes.lobby) {
+        next(false);
+        router.push({name: Routes.home});
+      }
+      else {
+        next(true);
+      }
+    })
 
     return {
       useShuffling

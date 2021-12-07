@@ -25,10 +25,6 @@ const actions: ActionTree<State["match"], State> = {
     commit(Mutations.MATCH_SAVE_PLAYER_INDEX, opponentIndex);
   },
 
-  [Actions.MATCH_EXIT]: ({ commit }, payload = true) => {
-    commit(Mutations.MATCH_EXIT, payload);
-  },
-
   [Actions.MATCH_SET_STATE]: ({ commit }, payload) => {
     if (payload !== undefined) {
       commit(Mutations.MATCH_SET_STATE, payload);

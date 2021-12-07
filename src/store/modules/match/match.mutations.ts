@@ -11,10 +11,6 @@ const mutations: MutationTree<State["match"]> = {
     state.opponent.index = payload;
   },
 
-  [Mutations.MATCH_EXIT](state, payload) {
-    if (state.exit !== payload) state.exit = payload;
-  },
-
   [Mutations.MATCH_SET_STATE](state, payload) {
     if (state.state !== payload) state.state = payload;
   },
