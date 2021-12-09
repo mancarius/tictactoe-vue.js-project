@@ -1,6 +1,6 @@
 <template>
     <div class="body">
-        <input type="text" placeholder="Insert the room code" ref="input" />
+        <input type="text" placeholder="Insert the room code" ref="input" v-model="roomCode" />
         <q-btn color="primary" @click="joinRoom">Join</q-btn>
     </div>
 </template>
@@ -9,12 +9,11 @@
 import { Actions } from '@/helpers/enums/actions.enum';
 import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchTypes } from '@/helpers/enums/match-types.enum';
-import { Mutations } from '@/helpers/enums/mutations.enum';
 import MatchService from '@/services/match.service';
 import { useQuasar } from 'quasar';
-import { computed, defineComponent, ref } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { useRouter } from 'vue-router';
-import { MutationPayload, useStore } from 'vuex';
+import { useStore } from 'vuex';
 import { useMatch } from '@/plugins/match';
 import PlayerService from '@/services/player.service';
 import useMatchObservables from '@/injectables/match-observables'
@@ -22,6 +21,10 @@ import useUserAuth from '@/injectables/user-auth'
 
 export default defineComponent({
   name:"JoinRoomBox",
+
+  props: {
+    'modelValue': String
+  },
 
   setup() {
     const store = useStore();
@@ -31,7 +34,7 @@ export default defineComponent({
     const $q = useQuasar();
     const {requireAuth} = useUserAuth();
     const {subscribeMatch, subscribePlayer, subscribeOpponent} = useMatchObservables();
-    const roomCode = computed(() => input.value?.value || null);
+    const roomCode = ref<string>();
 
     const joinRoom = async () => {
       // perform user auth if needed
@@ -50,6 +53,7 @@ export default defineComponent({
       const user = store.getters[Getters.USER_DATA];
 
       try{
+        console.log(roomCode.value);
         if(!roomCode.value || roomCode.value.trim().length === 0){
           throw TypeError("Bad room code");
         }
