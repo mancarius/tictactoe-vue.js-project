@@ -42,6 +42,7 @@ import { useStore } from 'vuex';
 import { Actions } from '@/helpers/enums/actions.enum';
 import { useQuasar } from 'quasar';
 import MatchService from '@/services/match.service';
+import { useStateHandler } from '@/injectables/state-handler';
 
 
 declare module "@vue/runtime-core" {
@@ -59,6 +60,7 @@ export default defineComponent({
     const match = useMatch();
     const store = useStore();
     const render = ref(false);
+    const { setMatchState } = useStateHandler();
 
     store.dispatch(Actions.LOADING_START, "Building the room...");
 
@@ -68,7 +70,8 @@ export default defineComponent({
 
     return {
       timeout: 0,
-      render
+      render,
+      setMatchState
     }
   },
 
@@ -112,6 +115,7 @@ export default defineComponent({
         if(!(this.$match.service instanceof MatchService))
           throw new Error("Bad match service");
         else {
+          this.setMatchState(MatchStates.builded);
           // sync match and layer state in store
           this.$match.service?.subscribe(({state}) => {
             if(state !== undefined) store.dispatch(Actions.MATCH_SET_STATE, state);
