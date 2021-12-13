@@ -34,7 +34,7 @@ export default defineComponent({
   setup() {
     const match = useMatch();
     const store = useStore<State>();
-    const { setMatchState, setPlayerState } = useStateHandler();
+    const { setPlayerState } = useStateHandler();
     const { dialog, notify } = useQuasar();
     const matchState = computed<MatchStates>(() => store.getters[Getters.MATCH_STATE]);
     const playerState = computed<PlayerStates>(() => store.getters[Getters.PLAYER_STATE]);
@@ -72,13 +72,9 @@ export default defineComponent({
     });
 
     onUnmounted(() => {
-      setPlayerState(PlayerStates.disconnected);
+      match.service && setPlayerState(PlayerStates.disconnected);
       // unsubscribe plugin subscriptions
       match.subscriptions.forEach((subs) => subs());
-    });
-
-    onMounted(() => {
-      setMatchState(MatchStates.builded);
     });
 
     watch([matchState, playerState], ([match_state, player_state]) => {
