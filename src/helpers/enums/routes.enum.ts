@@ -2,5 +2,6 @@ export enum Routes {
     home = 'Home',
     roomCode = 'RoomCode',
     lobby = 'Lobby',
-    game = 'Game'
+    game = 'Game',
+    builder = "Builder"
 }

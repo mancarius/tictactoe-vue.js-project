@@ -27,6 +27,11 @@ const routes: Array<RouteRecordRaw> = [
     },
     children: [
       {
+        path: "builder",
+        name: Routes.builder,
+        component: () => import(/* webpackChunkName: "match" */ "../views/Match/Builder.vue"),
+      },
+      {
         path: "room-code",
         name: Routes.roomCode,
         component: () =>
