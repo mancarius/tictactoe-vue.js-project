@@ -1,8 +1,8 @@
 <template>
   <div class="score-board">
-    <score :uid="match.opponent.uid" class="score-box left" />
+    <score :uid="opponentUID" class="score-box left" />
     <h6 class="label">score</h6>
-    <score :uid="match.player.uid" class="score-box right" />
+    <score :uid="playerUID" class="score-box right" />
   </div>
 </template>
 
@@ -20,7 +20,8 @@ export default defineComponent({
     const match = useMatch();
 
     return {
-      match
+      playerUID: match.player?.uid,
+      opponentUID: match.opponent?.uid
     }
   },
 })
