@@ -373,8 +373,6 @@ export default class BoardService {
     if (!data) return;
     const filteredFields = filterDifferentFields(this, data);
 
-    console.log("[receive]", data, "filteredFields", filteredFields);
-
     for (const [name, value] of Object.entries(filteredFields)) {
       const isPublic = !name.startsWith("_");
 

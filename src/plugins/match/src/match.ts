@@ -286,7 +286,6 @@ export const match: MatchPlugin = {
       { includeMetadataChanges: true },
       (docs) => {
         docs.docChanges().forEach(({ doc }) => {
-          console.log("board changes", doc.data());
           const { name, value } = doc.data();
           this.service?.board.sync({ [name]: value });
         });
@@ -305,7 +304,7 @@ export const match: MatchPlugin = {
       opponentQuery,
       (snapshot) => {
         snapshot.forEach((doc) => {
-          const data = doc.data();
+          const {score, shuffleBuffer, canShuffle, ...data} = doc.data();
           const playerIndex = this.getPlayerIndex(data.uid);
           if (playerIndex !== -1) {
             this.service?.players[playerIndex].sync(data);

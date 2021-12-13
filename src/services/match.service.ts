@@ -115,12 +115,12 @@ export default class MatchService {
       return;
     }
 
-    console.group("stateHandler");
-    console.log("before", {
-      matchState: this.state,
-      p1State,
-      p2State,
-    });
+    // console.group("stateHandler");
+    // console.log("before", {
+    //   matchState: this.state,
+    //   p1State,
+    //   p2State,
+    // });
 
     if (
       /*
@@ -191,7 +191,6 @@ export default class MatchService {
           p2State === PlayerStates.last_to_move))
     ) {
       this._lastUpdatedCells = this.board.lastUpdatedCells;
-      console.log("---------- AMMO", [...this._lastUpdatedCells]);
       this.checkLastUpdatedCells();
     } else if (
       /*
@@ -216,12 +215,12 @@ export default class MatchService {
       this.state = MatchStates.terminated;
     }
 
-    console.log("after", {
-      matchState: this.state,
-      p1State,
-      p2State,
-    });
-    console.groupEnd();
+    // console.log("after", {
+    //   matchState: this.state,
+    //   p1State,
+    //   p2State,
+    // });
+    // console.groupEnd();
   }
 
   /**
@@ -350,7 +349,6 @@ export default class MatchService {
     } else {
       throw new TypeError("Invalid sequence received");
     }
-    debugger
   }
 
   /**

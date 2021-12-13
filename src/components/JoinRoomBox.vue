@@ -53,7 +53,6 @@ export default defineComponent({
       const user = store.getters[Getters.USER_DATA];
 
       try{
-        console.log(roomCode.value);
         if(!roomCode.value || roomCode.value.trim().length === 0){
           throw TypeError("Bad room code");
         }
