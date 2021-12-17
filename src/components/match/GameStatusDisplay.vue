@@ -93,7 +93,9 @@ export default defineComponent({
     })
 
     function addMessage(action: {text: string} | {label: string} | {loading: boolean}, sent: boolean) {
-      messages.value.push({...action, sent, id:_.uniqueId()});
+      const prevMsg = [...messages.value].pop();
+      const nextMsg = {...action, sent, id:_.uniqueId()};
+      !_.isEqual(prevMsg, nextMsg) && messages.value.push(nextMsg);
     }
 
     return {

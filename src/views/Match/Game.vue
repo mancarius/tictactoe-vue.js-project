@@ -131,7 +131,7 @@ export default defineComponent({
   .actions {
     margin: 1rem 0;
     display: flex;
-    justify-content: right;
+    justify-content: center;
   }
 }
 </style>

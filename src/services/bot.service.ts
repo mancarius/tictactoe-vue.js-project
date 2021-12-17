@@ -22,7 +22,7 @@ export default class BotService extends PlayerService {
 
     const options: Player.options = {
       isOwner: false,
-      sign: "YbvNI6OTqmtXmvQLmgsI",
+      sign: "dC8xgthM7TD1Smu9F6a7",
       customName: "Bot",
     };
 

@@ -48,9 +48,9 @@ export default defineComponent({
     const playerState = computed(() => store.getters[Getters.PLAYER_STATE]);
     const opponentState = computed(() => store.getters[Getters.OPPONENT_STATE]);
     const playerSymbolCode = match.player?.options.sign;
-    const playerSymbolURL = symbols.getFullPath(playerSymbolCode as SymbolCode);
+    const playerSymbolURL = symbols.getFilename(playerSymbolCode as SymbolCode);
     const opponentSymbolCode = match.opponent?.options.sign;
-    const opponentSymbolURL = symbols.getFullPath(opponentSymbolCode as SymbolCode);
+    const opponentSymbolURL = symbols.getFilename(opponentSymbolCode as SymbolCode);
     const canMoveTemplate = [MatchStates.waiting_for_player_move, PlayerStates.waiting_for_opponent_move];
     const canMove = ref(false);
     const isBotFindingNextMove = ref(false);
@@ -128,22 +128,34 @@ export default defineComponent({
         isOwner && setFirstMove();
       } else {
         const isPossibleToMove = nextMatchState === MatchStates.waiting_for_player_move;
-        isPossibleToMove 
-          ? setTurn(nextPlayerState, nextOpponentState) 
-          : prepareNextTurn(nextPlayerState, nextOpponentState)
+        const nextPlayerToMove = match.service?.nextPlayerToMove ?? null;
+        isPossibleToMove
+          ? setTurn(nextPlayerToMove) 
+          : prepareNextTurn(nextPlayerToMove);
       }
     }
 
-    function prepareNextTurn(playerState: PlayerStates, opponentState: PlayerStates) {
-      const isOpponentTurn = playerState === PlayerStates.last_to_move;
-      const isPlayerTurn = opponentState === PlayerStates.last_to_move;
-      if (isOpponentTurn) setOpponentState(PlayerStates.next_to_move);
-      else if (isPlayerTurn) setPlayerState(PlayerStates.next_to_move);
+    function prepareNextTurn(nextPlayerToMove: string | null) {
+      const isOpponentTurn = nextPlayerToMove 
+        ? match.opponent?.uid === nextPlayerToMove
+        : playerState.value === PlayerStates.waiting_for_opponent_move || playerState.value === PlayerStates.last_to_move;
+      const isPlayerTurn = nextPlayerToMove 
+        ? match.player?.uid === nextPlayerToMove
+        : opponentState.value === PlayerStates.waiting_for_opponent_move || opponentState.value === PlayerStates.last_to_move;
+
+      // if (isOpponentTurn) setOpponentState(PlayerStates.next_to_move);
+      // else if (isPlayerTurn) setPlayerState(PlayerStates.next_to_move);
     }
 
-    function setTurn(playerState: PlayerStates, opponentState: PlayerStates) {
-      const isPlayerTurn = playerState === PlayerStates.next_to_move || opponentState === PlayerStates.waiting_for_opponent_move || opponentState === PlayerStates.last_to_move;
-      const isOpponentTurn = opponentState === PlayerStates.next_to_move || playerState === PlayerStates.waiting_for_opponent_move || playerState === PlayerStates.last_to_move;
+    function setTurn(nextPlayerToMove: string | null) {
+      const isOpponentTurn = nextPlayerToMove 
+        ? match.opponent?.uid === nextPlayerToMove
+        : playerState.value === PlayerStates.waiting_for_opponent_move || playerState.value === PlayerStates.last_to_move;
+      const isPlayerTurn = nextPlayerToMove 
+        ? match.player?.uid === nextPlayerToMove
+        : opponentState.value === PlayerStates.waiting_for_opponent_move || opponentState.value === PlayerStates.last_to_move;
+
+      
       if (isOpponentTurn) {
         setOpponentState(PlayerStates.moving);
         setPlayerState(PlayerStates.waiting_for_opponent_move);
@@ -205,6 +217,18 @@ export default defineComponent({
 
     &.cols5 {
       grid-template-columns: repeat(5, minmax(min(5rem, 100%), 1fr));
+    }
+
+    &.cols6 {
+      grid-template-columns: repeat(6, minmax(min(5rem, 100%), 1fr));
+    }
+
+    &.cols7 {
+      grid-template-columns: repeat(7, minmax(min(5rem, 100%), 1fr));
+    }
+
+    &.cols8 {
+      grid-template-columns: repeat(8, minmax(min(5rem, 100%), 1fr));
     }
 
     &.disabled {

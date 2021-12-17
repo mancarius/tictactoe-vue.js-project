@@ -30,9 +30,6 @@ export default defineComponent({
     const store = useStore();
     const match = useMatch();
     const uid = store.getters[Getters.USER_DATA].uid;
-    const nextPlayerToMove = computed(() => {
-      return match.service?.nextPlayerToMove
-    })
     const player = computed(() => {
       return match.player;
     });
@@ -63,7 +60,6 @@ export default defineComponent({
 
     return {
       uid,
-      nextPlayerToMove,
       player,
       opponent,
       opponentName,

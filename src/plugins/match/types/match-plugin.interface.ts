@@ -2,7 +2,7 @@ import { MatchStates } from "@/helpers/enums/match-states.enum";
 import { MatchTypes } from "@/helpers/enums/match-types.enum";
 import { PlayerStates } from "@/helpers/enums/player-states.enum";
 import BoardService from "@/services/board.service";
-import MatchService from "@/services/match.service";
+import MatchService from "@/services/match/match.service";
 import PlayerService from "@/services/player.service";
 import Player from "@/types/player.interface";
 import {

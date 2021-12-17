@@ -18,7 +18,7 @@ const routes: Array<RouteRecordRaw> = [
     },
   },
   {
-    path: "/match/:matchType",
+    path: "/:matchType",
     component: () =>
       import(/* webpackChunkName: "match" */ "../views/Match/index.vue"),
     props: true,

@@ -1,7 +1,7 @@
 import db from "@/helpers/db";
 import { MatchTypes } from "@/helpers/enums/match-types.enum";
 import { PlayerStates } from "@/helpers/enums/player-states.enum";
-import MatchService from "@/services/match.service";
+import MatchService from "@/services/match/match.service";
 import MatchPlugin, {
   MatchPluginOptions,
 } from "@/plugins/match/types/match-plugin.interface";
@@ -250,9 +250,7 @@ export const match: MatchPlugin = {
    */
   get opponent(): PlayerService | null {
     if (this.service instanceof MatchService && this.uid)
-      return this.service.players.filter(
-        (player) => player.uid !== this.uid
-      )[0];
+      return this.service.getOpponent(this.uid);
     else return null;
   },
 

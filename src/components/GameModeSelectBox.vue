@@ -14,6 +14,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { MatchTypes } from '@/helpers/enums/match-types.enum';
+import { Routes } from '@/helpers/enums/routes.enum';
  
 export default defineComponent({
     name:"GameModeSelectBox",
@@ -26,7 +27,7 @@ export default defineComponent({
     methods: {
       createMatch(type: MatchTypes) {
         let params: {matchType: string} = { matchType: type };
-        this.$router.push({name: 'RoomCode', params});
+        this.$router.push({name: Routes.builder, params});
       }
     },
 })

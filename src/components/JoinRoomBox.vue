@@ -1,15 +1,15 @@
 <template>
-    <div class="body">
+    <form class="body" @submit.prevent="joinRoom">
         <input type="text" placeholder="Insert the room code" ref="input" v-model="roomCode" />
-        <q-btn color="primary" @click="joinRoom">Join</q-btn>
-    </div>
+        <q-btn color="primary">Join</q-btn>
+    </form>
 </template>
 
 <script lang="ts">
 import { Actions } from '@/helpers/enums/actions.enum';
 import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchTypes } from '@/helpers/enums/match-types.enum';
-import MatchService from '@/services/match.service';
+import MatchService from '@/services/match/match.service';
 import { useQuasar } from 'quasar';
 import { defineComponent, ref } from 'vue'
 import { useRouter } from 'vue-router';

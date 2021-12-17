@@ -5,6 +5,8 @@ export type SymbolFilename = string;
 
 export type SymbolCode = string;
 
+export type SymbolLabel = string;
+
 export interface SymbolOptions {
   localPath: string;
 }
@@ -12,6 +14,7 @@ export interface SymbolOptions {
 export interface Symbol_ {
   code: SymbolCode;
   filename: SymbolFilename;
+  label: SymbolLabel;
 }
 
 export default interface SymbolsPlugin {

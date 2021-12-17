@@ -1,7 +1,6 @@
 import { PlayerStates } from "@/helpers/enums/player-states.enum";
 import filterDifferentFields from "@/helpers/filterDifferentFields";
 import removeObservables from "@/helpers/removeObservables";
-import * as Board from "@/types/board-types.interface";
 import * as Player from "@/types/player.interface";
 import User from "@/types/user.interface";
 import _ from "lodash";
@@ -25,7 +24,7 @@ export default class PlayerService extends UserService {
   public score: Player.score = 0;
   public shuffleBuffer = 0;
   public canShuffle = false;
-  public lastAction: number | 'shuffle' | undefined;
+  public lastMoveTimestamp = 0;
   private _changes$: Subject<Partial<PlayerService>> = new ReplaySubject(1);
 
   constructor(user: User, options?: Partial<Player.options>) {
@@ -41,6 +40,10 @@ export default class PlayerService extends UserService {
         const isTargetObject =
           typeof target[prop] === "object" && !isTargetArray;
         const isValueObject = typeof value === "object" && !isValueArray;
+
+        if (prop === "state" && value === PlayerStates.moving) {
+          this.lastMoveTimestamp = Date.now();
+        }
 
         if (isTargetObject && isValueObject)
           target[prop] = { ...target[prop], ...value };
@@ -231,7 +234,6 @@ export default class PlayerService extends UserService {
    * @memberof MatchService
    */
   public moveOrShuffle(board: BoardService, action: number | "shuffle"): void {
-    this.lastAction = action;
     if (action === "shuffle") {
       this.state = PlayerStates.shuffling;
     } else {

@@ -1,41 +1,43 @@
 <template>
-  <q-btn round @click="shuffle" icon="fas fa-random" :class="{disabled: !canShuffle}" />
+  
+  <q-knob
+      readonly
+      v-model="shuffleBuffer"
+      show-value
+      size="90px"
+      :thickness="0.22"
+      track-color="grey-3"
+      class="q-ma-md shadow-2 knob"
+      color="orange"
+  >
+    <q-btn flat round class="browser-default" @click="shuffle" icon="fas fa-random" :class="{disabled: !canShuffle, 'text-orange': canShuffle}" />
+  </q-knob>
 </template>
 
 <script lang="ts">
 import { Getters } from '@/helpers/enums/getters.enum';
-import { MatchStates } from '@/helpers/enums/match-states.enum';
-import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
 import { useStateHandler } from '@/injectables/state-handler';
 import { useMatch } from '@/plugins/match'
 import BotService from '@/services/bot.service';
 import PlayerService from '@/services/player.service';
-import { computed, defineComponent, watch } from 'vue'
+import { computed, defineComponent, ref, watch } from 'vue'
 import { useStore } from 'vuex';
 
 export default defineComponent({
   setup() {
     const match = useMatch();
-    const {setPlayerState, setOpponentState} = useStateHandler();
+    const { setPlayerState } = useStateHandler();
     const store = useStore();
-    const matchType = match.service?.type;
     const matchState = computed(() => store.getters[Getters.MATCH_STATE]);
     const playerState = computed(() => store.getters[Getters.PLAYER_STATE]);
     const opponentState = computed(() => store.getters[Getters.OPPONENT_STATE]);
-    const canShuffle = computed(() => match.player?.canShuffle);
+    const canShuffle = ref(false);
+    const shuffleBuffer = ref(0);
 
-    watch([playerState, opponentState], (next, previous) => {
+    watch([playerState, opponentState, matchState], (next, previous) => {
       shufflingHandler(next, previous);
     });
-
-    watch(matchState, (next) => {
-      if(next === MatchStates.shaking_board) {
-        if(opponentState.value === PlayerStates.shuffling) {
-          //setOpponentState(PlayerStates.last_to_move);
-        }
-      }
-    })
 
     function shuffle() {
       if(canShuffle.value && match.player) {
@@ -44,20 +46,32 @@ export default defineComponent({
     }
 
     function shufflingHandler(next: PlayerStates[], previous: PlayerStates[]): void {
-      const [previousPlayerState, previousOpponentState] = previous;
+      const [nextPlayerState] = next;
+      const [previousPlayerState] = previous;
 
       if(previousPlayerState === PlayerStates.shuffling) {
         match.player && clearAndDisablePlayerShuffling(match.player);
+      } else if(previousPlayerState === PlayerStates.score) {
+        shuffleBuffer.value = match.player instanceof PlayerService
+          ? (match.player.shuffleBuffer * 100 / match.service!.shuffleActivationTarget)
+          : 0;
+      }
+
+      if (match.player) {
+        canShuffle.value = match.player.canShuffle && nextPlayerState === PlayerStates.moving;
       }
     }
 
     function clearAndDisablePlayerShuffling(player: PlayerService | BotService): void {
+      canShuffle.value = false;
+      shuffleBuffer.value = 0;
       player.clearShuffleBuffer();
       player.disableShuffling();
     }
 
     return {
       canShuffle,
+      shuffleBuffer,
       shuffle
     }
   },
@@ -65,6 +79,10 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+.knob {
+  border-radius: 50%;
+
+}
 .disabled {
   pointer-events: none;
 }

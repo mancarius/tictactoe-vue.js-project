@@ -1,5 +1,5 @@
 import { match } from "@/plugins/match/src/match";
-import MatchService from "@/services/match.service";
+import MatchService from "@/services/match/match.service";
 import PlayerService from "@/services/player.service";
 
 export default function useMatchObservables() {

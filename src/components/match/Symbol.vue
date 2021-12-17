@@ -20,11 +20,11 @@ export default defineComponent({
   
     watch(() => props.code, async (newCode, oldCode) => {
       if( newCode !== oldCode )
-      symbols.getFullPath(newCode as string).then(value => src.value = value);
+      symbols.getFilename(newCode as string).then(value => src.value = value);
     } );
 
     onMounted(async () => {
-      await symbols.getFullPath(props.code as string).then(value => src.value = value);
+      await symbols.getFilename(props.code as string).then(value => src.value = value);
     });
 
     return {

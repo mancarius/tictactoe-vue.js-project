@@ -14,8 +14,8 @@ import { useStateHandler } from '@/injectables/state-handler';
 import { useMatch } from '@/plugins/match';
 import router from '@/router';
 import { useQuasar } from 'quasar';
-import { computed, defineComponent, onMounted, onUnmounted, watch } from 'vue';
-import { onBeforeRouteLeave, useRoute } from 'vue-router';
+import { computed, defineComponent, onUnmounted, watch } from 'vue';
+import { onBeforeRouteLeave } from 'vue-router';
 import { useStore } from 'vuex';
 import { State } from 'vuex/core';
 

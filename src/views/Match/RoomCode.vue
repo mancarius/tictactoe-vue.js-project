@@ -33,7 +33,7 @@ import PlayerService from '@/services/player.service';
 import store from '@/store';
 import MatchPlugin from '@/plugins/match/types/match-plugin.interface';
 import User from '@/types/user.interface';
-import { defineComponent, ref } from '@vue/runtime-core';
+import { defineComponent, ref, watchEffect } from '@vue/runtime-core';
 import _ from 'lodash';
 import { useMatch } from '@/plugins/match';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
@@ -41,8 +41,9 @@ import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import { useStore } from 'vuex';
 import { Actions } from '@/helpers/enums/actions.enum';
 import { useQuasar } from 'quasar';
-import MatchService from '@/services/match.service';
+import MatchService from '@/services/match/match.service';
 import { useStateHandler } from '@/injectables/state-handler';
+import { useRoute, useRouter } from 'vue-router';
 
 
 declare module "@vue/runtime-core" {
@@ -58,20 +59,39 @@ export default defineComponent({
 
   setup() {
     const match = useMatch();
-    const store = useStore();
-    const render = ref(false);
-    const { setMatchState } = useStateHandler();
-
-    store.dispatch(Actions.LOADING_START, "Building the room...");
+    const router = useRouter();
+    const route = useRoute();
+    const { matchType } = route.params;
+    const render = ref(matchType === MatchTypes.PLAYER_VS_PLAYER);
+    let timeout = 0;
 
     if(match.service) {
       match.service.state = MatchStates.building;
     }
 
+    watchEffect(() => {
+        if(match.opponent instanceof PlayerService) {
+          const delay = match.service?.type === MatchTypes.PLAYER_VS_PLAYER ? 2000 : 0;
+          // subscribe to the opponent state and sync the store
+          match.opponent?.subscribe(({state}) => {
+            if(state !== undefined) store.dispatch(Actions.OPPONENT_SET_STATE, state);
+          });
+          
+          timeout = setTimeout(() => {
+            router.push({
+              name: "Lobby",
+              params: {
+                matchId: match.service?.id,
+                matchType: match.service?.type
+              }
+          });
+        }, delay);
+        }
+      });
+
     return {
-      timeout: 0,
       render,
-      setMatchState
+      timeout
     }
   },
 
@@ -84,58 +104,9 @@ export default defineComponent({
       return opponent;
     }
   },
-
-  watch: {
-      opponent(player) {
-        if(player instanceof PlayerService) {
-          const delay = this.$match.service?.type === MatchTypes.PLAYER_VS_PLAYER ? 2000 : 0;
-          // subscribe to the opponent state and sync the store
-          this.$match.opponent?.subscribe(({state}) => {
-            if(state !== undefined) store.dispatch(Actions.OPPONENT_SET_STATE, state);
-          });
-          
-          this.timeout = setTimeout(() => {
-            this.$router.push({
-              name: "Lobby",
-              params: {
-                matchId: this.$match.service?.id,
-                matchType: this.$match.service?.type
-              }
-          });
-        }, delay);
-        }
-      }
-  },
   
   mounted() {
-    const { matchType } = this.$route.params;
-    
-    this.$match.create(store.getters[Getters.USER_DATA], matchType as MatchTypes)
-      .then(() => {
-        if(!(this.$match.service instanceof MatchService))
-          throw new Error("Bad match service");
-        else {
-          this.setMatchState(MatchStates.builded);
-          // sync match and layer state in store
-          this.$match.service?.subscribe(({state}) => {
-            if(state !== undefined) store.dispatch(Actions.MATCH_SET_STATE, state);
-          });
-          this.$match.player?.subscribe(({state}) => {
-            if(state !== undefined) store.dispatch(Actions.PLAYER_SET_STATE, state);
-          });
-
-          store.dispatch(Actions.LOADING_STOP);
-
-          if(matchType === MatchTypes.PLAYER_VS_PLAYER)
-            this.render = true;
-        }
-      })
-      .catch (error => {
-        console.error(error);
-        const { notify } = useQuasar();
-        notify({message: "I can't build the room now."});
-        this.$router.push({name: "Home"});
-      });
+    store.dispatch(Actions.LOADING_STOP);
   },
 
   unmounted() {

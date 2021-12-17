@@ -1,5 +1,5 @@
 import db from "@/helpers/db";
-import MatchService from "@/services/match.service";
+import MatchService from "@/services/match/match.service";
 import {
   collection,
   doc,
