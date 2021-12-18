@@ -1,7 +1,7 @@
 <template>
     <form class="body" @submit.prevent="joinRoom">
         <input type="text" placeholder="Insert the room code" ref="input" v-model="roomCode" />
-        <q-btn color="primary">Join</q-btn>
+        <q-btn color="primary" type="submit">Join</q-btn>
     </form>
 </template>
 
