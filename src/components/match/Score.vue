@@ -23,7 +23,7 @@ export default defineComponent({
     const score = ref(match.service?.getPlayer(props.uid as string).score ?? '0');
 
     watch(() => store.getters[Getters.MATCH_STATE], (next, prev) => {
-      if(prev === MatchStates.sequence_found) {
+      if(prev === MatchStates.sequence_found || prev === MatchStates.resetting) {
         score.value = match.service?.getPlayer(props.uid as string).score ?? '0';
       }
     });

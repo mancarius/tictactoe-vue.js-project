@@ -49,7 +49,7 @@ export default defineComponent({
       const [nextPlayerState] = next;
       const [previousPlayerState] = previous;
 
-      if(previousPlayerState === PlayerStates.shuffling) {
+      if(previousPlayerState === PlayerStates.shuffling || previousPlayerState === PlayerStates.in_game) {
         match.player && clearAndDisablePlayerShuffling(match.player);
       } else if(previousPlayerState === PlayerStates.score) {
         shuffleBuffer.value = match.player instanceof PlayerService

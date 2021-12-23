@@ -302,7 +302,7 @@ export const match: MatchPlugin = {
       opponentQuery,
       (snapshot) => {
         snapshot.forEach((doc) => {
-          const {score, shuffleBuffer, canShuffle, ...data} = doc.data();
+          const {score, shuffleBuffer, canShuffle, lastMoveTimestamp, ...data} = doc.data();
           const playerIndex = this.getPlayerIndex(data.uid);
           if (playerIndex !== -1) {
             this.service?.players[playerIndex].sync(data);

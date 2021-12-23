@@ -59,7 +59,7 @@ export default defineComponent({
       ['cols'+columns]: true, 
       disabled: !canMove.value
     }));
-    const {setPlayerState, setOpponentState, setMatchState} = useStateHandler();
+    const {setPlayerState, setOpponentState} = useStateHandler();
 
     watch(matchState, (next) => {
 
@@ -73,16 +73,20 @@ export default defineComponent({
 
     }, {deep: true});
 
+    watch(playerState, (next) => {
+      canMove.value = next === PlayerStates.moving
+    });
+
     watch([opponentState, matchState], ([nextOpponentState, nextMatchState], [oldOpponentState, oldMatchState]) => {
       
-      canMove.value = _.isEqual([nextMatchState, nextOpponentState], canMoveTemplate);
+      //canMove.value = _.isEqual([nextMatchState, nextOpponentState], canMoveTemplate);
 
       isBotFindingNextMove.value = nextOpponentState === PlayerStates.calculating_next_move;
     }, {deep: true});
 
-    watch(canMove, (next) => {
-      next && setPlayerState(PlayerStates.moving)
-    });
+    // watch(canMove, (next) => {
+    //   next && setPlayerState(PlayerStates.moving)
+    // });
 
     watch(isWinningSequence, (next) => {
       const winningSequence = match.service?.board.winningSequence;
@@ -109,7 +113,7 @@ export default defineComponent({
             setPlayerState(PlayerStates.last_to_move);
           } else if(matchType === MatchTypes.PLAYER_VS_COMPUTER) {
             match.service.board.shuffleCells();
-            setOpponentState(PlayerStates.last_to_move);
+            matchType === MatchTypes.PLAYER_VS_COMPUTER && setOpponentState(PlayerStates.last_to_move);
           }
         }
       }, 2000);
@@ -128,40 +132,30 @@ export default defineComponent({
         isOwner && setFirstMove();
       } else {
         const isPossibleToMove = nextMatchState === MatchStates.waiting_for_player_move;
-        const nextPlayerToMove = match.service?.nextPlayerToMove ?? null;
-        isPossibleToMove
-          ? setTurn(nextPlayerToMove) 
-          : prepareNextTurn(nextPlayerToMove);
+        
+        if(isPossibleToMove) {
+          const nextPlayerToMove = match.service?.nextPlayerToMove ?? null;
+          setTurn(nextPlayerToMove)
+        }
       }
     }
 
-    function prepareNextTurn(nextPlayerToMove: string | null) {
-      const isOpponentTurn = nextPlayerToMove 
-        ? match.opponent?.uid === nextPlayerToMove
-        : playerState.value === PlayerStates.waiting_for_opponent_move || playerState.value === PlayerStates.last_to_move;
-      const isPlayerTurn = nextPlayerToMove 
-        ? match.player?.uid === nextPlayerToMove
-        : opponentState.value === PlayerStates.waiting_for_opponent_move || opponentState.value === PlayerStates.last_to_move;
-
-      // if (isOpponentTurn) setOpponentState(PlayerStates.next_to_move);
-      // else if (isPlayerTurn) setPlayerState(PlayerStates.next_to_move);
-    }
 
     function setTurn(nextPlayerToMove: string | null) {
-      const isOpponentTurn = nextPlayerToMove 
+      const isOpponentTurn: boolean = nextPlayerToMove 
         ? match.opponent?.uid === nextPlayerToMove
         : playerState.value === PlayerStates.waiting_for_opponent_move || playerState.value === PlayerStates.last_to_move;
-      const isPlayerTurn = nextPlayerToMove 
+      const isPlayerTurn: boolean = nextPlayerToMove 
         ? match.player?.uid === nextPlayerToMove
         : opponentState.value === PlayerStates.waiting_for_opponent_move || opponentState.value === PlayerStates.last_to_move;
 
-      
+      console.log({isPlayerTurn, isOpponentTurn});
       if (isOpponentTurn) {
-        setOpponentState(PlayerStates.moving);
+        matchType === MatchTypes.PLAYER_VS_COMPUTER && setOpponentState(PlayerStates.moving);
         setPlayerState(PlayerStates.waiting_for_opponent_move);
       } else if (isPlayerTurn) {
         setPlayerState(PlayerStates.moving);
-        setOpponentState(PlayerStates.waiting_for_opponent_move);
+        matchType === MatchTypes.PLAYER_VS_COMPUTER && setOpponentState(PlayerStates.waiting_for_opponent_move);
       }
     }
 

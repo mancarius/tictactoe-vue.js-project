@@ -63,8 +63,8 @@ export function stateHandler(
     (p1State === PlayerStates.in_game ||
       p1State === PlayerStates.waiting_for_opponent_move ||
       p1State === PlayerStates.moving ||
-      p1State === PlayerStates.next_to_move ||
-      p2State === PlayerStates.in_game ||
+      p1State === PlayerStates.next_to_move) &&
+    (p2State === PlayerStates.in_game ||
       p2State === PlayerStates.waiting_for_opponent_move ||
       p2State === PlayerStates.moving ||
       p2State === PlayerStates.next_to_move)
@@ -80,7 +80,7 @@ export function stateHandler(
     return MatchStates.shaking_board;
   } else if (
     /*
-     * Call checkLastUpdatedCells()
+     * Checking sequence
      */
     (matchState === MatchStates.waiting_for_player_move ||
       matchState === MatchStates.shaking_board) &&
@@ -89,7 +89,7 @@ export function stateHandler(
       (p1State === PlayerStates.waiting_for_opponent_move &&
         p2State === PlayerStates.last_to_move))
   ) {
-      return MatchStates.checking_sequence;
+    return MatchStates.checking_sequence;
   } else if (
     /*
      * Sequence found

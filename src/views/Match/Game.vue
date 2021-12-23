@@ -71,7 +71,7 @@ export default defineComponent({
             focus: 'ok',
             persistent: true
           }).onOk(() => {
-            match.service && match.reset();
+            match.reset();
           }).onCancel(() => {
             setMatchState(MatchStates.closed_by_owner);
             router.push({name: Routes.home})
@@ -81,15 +81,21 @@ export default defineComponent({
           dialog({
             title: dialogTitle,
             message: "If you want to play again wait for room owner to restart the game, else exit the room.",
+            ok: {
+              label: "Wait",
+              color: "primary",
+            },
             cancel: {
               label: "Exit",
               color: "negative"
             },
             persistent: true
+          }).onOk(() => {
+            match.reset();
           }).onCancel(() => {
             setMatchState(MatchStates.closed_by_owner);
             router.push({name: Routes.home})
-          })
+          });
         }
       }
     });

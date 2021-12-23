@@ -41,8 +41,10 @@ export default class PlayerService extends UserService {
           typeof target[prop] === "object" && !isTargetArray;
         const isValueObject = typeof value === "object" && !isValueArray;
 
-        if (prop === "state" && value === PlayerStates.moving) {
-          this.lastMoveTimestamp = Date.now();
+        //console.log(target['displayName'], 'set', prop, 'to', value);
+
+        if (prop === "state" && value === PlayerStates.last_to_move) {
+          target.lastMoveTimestamp = Date.now();
         }
 
         if (isTargetObject && isValueObject)

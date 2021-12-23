@@ -103,15 +103,39 @@ export default class MatchService {
    * @memberof MatchService
    */
   private _stateHandler([p1State, p2State]: PlayerStates[]): void {
-    console.log({matchState: this.state, p1State, p2State});
     const nextState = stateHandler(this.state, p1State, p2State);
 
-    if (nextState) {
+    if (nextState && nextState !== this.state) {
       this.state = nextState;
 
-      if (nextState === MatchStates.checking_sequence) {
-        this._lastUpdatedCells = this.board.lastUpdatedCells;
-        this.checkLastUpdatedCells();
+      console.log("_stateHandler", {
+        matchState: this.state,
+        p1State,
+        p2State,
+      });
+
+      switch (nextState) {
+        case MatchStates.checking_sequence: {
+          this._lastUpdatedCells = this.board.lastUpdatedCells;
+          this.checkLastUpdatedCells();
+          break;
+        }
+        case MatchStates.waiting_for_player_move: {
+          if (
+            this.players[0].state === PlayerStates.moving &&
+            this.players[1].state !== PlayerStates.waiting_for_opponent_move
+          )
+            this.players[1].state = PlayerStates.waiting_for_opponent_move;
+          else if (
+            this.players[1].state === PlayerStates.moving &&
+            this.players[0].state !== PlayerStates.waiting_for_opponent_move
+          )
+            this.players[0].state = PlayerStates.waiting_for_opponent_move;
+          break;
+        }
+        default: {
+          break;
+        }
       }
     }
   }
@@ -230,7 +254,6 @@ export default class MatchService {
    * @memberof MatchService
    */
   private _fillPlayerShuffleBuffer(uid: Player.userId, score: number): void {
-    console.log("filled", score);
     this.getPlayer(uid).shuffleBuffer += score;
     if (this.getPlayer(uid).shuffleBuffer >= this.shuffleActivationTarget) {
       this.getPlayer(uid).enableShuffling();
@@ -540,7 +563,7 @@ export default class MatchService {
       this.players[1].lastMoveTimestamp,
     ];
 
-    console.log(timestamp);
+    console.log("MatchService - nextPlayerToMove", timestamp);
 
     if (timestamp[0] === 0 && timestamp[1] === 0) return null;
 
@@ -550,6 +573,8 @@ export default class MatchService {
         : this.players[1].uid;
     }
 
-    return timestamp[0] > timestamp[1] ? this.players[1].uid : this.players[0].uid;
+    return timestamp[0] > timestamp[1]
+      ? this.players[1].uid
+      : this.players[0].uid;
   }
 }
