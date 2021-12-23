@@ -43,7 +43,7 @@ export default defineComponent({
       id: any;
     }[]> = ref([]);
 
-    watch([matchState, playerState, opponentState], (next, [prevMatchState]) => {
+    watch([matchState, playerState, opponentState], (next) => {
       const [m,p,o] = next;
 
       if(m === MatchStates.starting) {
@@ -95,7 +95,10 @@ export default defineComponent({
     function addMessage(action: {text: string} | {label: string} | {loading: boolean}, sent: boolean) {
       const prevMsg = [...messages.value].pop();
       const nextMsg = {...action, sent, id:_.uniqueId()};
-      !_.isEqual(prevMsg, nextMsg) && messages.value.push(nextMsg);
+      const actionKey = Object.keys(action)[0];
+      const actionValue = actionKey ? Reflect.get(action, actionKey) : null;
+      const isEqual = prevMsg && actionValue === Reflect.get(prevMsg, actionKey) && nextMsg.sent === prevMsg.sent;
+      !isEqual && messages.value.push(nextMsg);
     }
 
     return {
