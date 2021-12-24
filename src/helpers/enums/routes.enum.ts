@@ -3,5 +3,6 @@ export enum Routes {
     roomCode = 'RoomCode',
     lobby = 'Lobby',
     game = 'Game',
-    builder = "Builder"
+    builder = "Builder",
+    accountSettings = "AccountSettings"
 }
