@@ -36,7 +36,7 @@ import { useStateHandler } from '@/injectables/state-handler';
 import { useMatch } from '@/plugins/match';
 import store from '@/store';
 import { options } from '@/types/player.interface';
-import { computed, defineComponent, onBeforeMount, ref, watch } from 'vue'
+import { computed, defineComponent, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
@@ -53,7 +53,6 @@ export default defineComponent({
       const { setPlayerState } = useStateHandler();
       const matchState = computed(() => store.getters[Getters.MATCH_STATE]);
       const ready = ref(match.player!.isReady);
-      const opponentIsReady = computed(() => match.opponent!.isReady);
       const opponentSymbol = computed(() => match.opponent!.options?.sign);
       const playerSymbol = computed({
         get: () => match.player?.options.sign,

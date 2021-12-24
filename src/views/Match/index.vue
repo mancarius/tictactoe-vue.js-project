@@ -61,6 +61,7 @@ export default defineComponent({
             focus: 'cancel',
             persistent: true
           }).onOk(() => {
+            setPlayerState(PlayerStates.disconnected);
             resolve(true)
           }).onCancel(() => 
             resolve(false)
@@ -77,6 +78,14 @@ export default defineComponent({
       match.subscriptions.forEach((subs) => subs());
     });
 
+    function redirectToHome(message: string) {
+        notify({message});
+        store.dispatch(Actions.LOADING_START, "Closing room...");
+        setTimeout(() => {
+            router.push({ name: Routes.home, params:{ isRedirect: '1' }});
+          }, 3000);
+      }
+
     watch([matchState, playerState], ([match_state, player_state]) => {
       switch(match_state){
         case MatchStates.ready:
@@ -85,11 +94,10 @@ export default defineComponent({
           }
           break;
         case MatchStates.error:
-          store.dispatch(Actions.LOADING_START, "Closing room...");
-          notify({message: "Something goes wrong. You will be redirect to the home soon"});
-          setTimeout(() => {
-            router.push({ name: Routes.home, params:{ isRedirect: '1' }});
-          }, 3000);
+          redirectToHome("Something goes wrong. You will be redirect to the home soon");
+          break;
+        case MatchStates.player_left_the_room:
+          redirectToHome("The opponent left the game. You will be redirect to the home soon");
           break;
         default:
           store.dispatch(Actions.LOADING_STOP)
@@ -97,7 +105,7 @@ export default defineComponent({
     }, {deep: true});
 
     return {
-      matchState
+      matchState,
     }
   }
 })

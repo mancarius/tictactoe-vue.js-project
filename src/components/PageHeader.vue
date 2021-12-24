@@ -64,7 +64,7 @@ export default defineComponent({
 
   methods: {
     async logout() {
-      store.dispatch(Actions.USER_LOG_OUT).then(() => this.$router.push({name: "Home"}))
+      store.dispatch(Actions.USER_LOG_OUT).then(() => this.$router.push({name: "Home",  params:{isRedirect: 1}}))
     }
   },
 
