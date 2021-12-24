@@ -43,6 +43,9 @@ export default defineComponent({
     flex: 1;
     display: flex;
     flex-direction: column;
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
   }
   
   footer {
