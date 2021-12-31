@@ -12,15 +12,15 @@
         <q-item-label header>User Preferences</q-item-label>
         <q-item clickable v-ripple>
           <q-item-section>
-            <q-item-label>Nickname</q-item-label>
-            <q-item-label caption>{{nickname || 'Customize the name to show in game'}}</q-item-label>
+            <q-item-label>Custom name</q-item-label>
+            <q-item-label caption>{{customName || 'Customize the name to show in game'}}</q-item-label>
             <q-popup-edit 
-              v-model="nickname" 
+              v-model="customName" 
               buttons 
               persistent 
-              title="Edit the Nickname" 
+              title="Customize your name" 
               v-slot="scope">
-              <q-input v-model="scope.value" class="browser-default" autofocus counter @keyup.enter="scope.set" />
+              <q-input v-model="scope.value" autofocus counter @keyup.enter="scope.set" />
             </q-popup-edit>
           </q-item-section>
         </q-item>
@@ -48,29 +48,29 @@ export default defineComponent({
     const router = useRouter();
     const { notify } = useQuasar();
     const userId = store.getters[Getters.USER_DATA].uid;
-    let nickname: Ref<string | null> = ref(null);
+    let customName: Ref<string | null> = ref(null);
 
-    watch(nickname, (next, prev) => {
-      console.log('nickname changed:', next);
+    watch(customName, (next, prev) => {
+      console.log('customName changed:', next);
       if( next ) {
-        UserService.saveSettings(userId, {'nickname': next}).catch(error => {
+        UserService.saveSettings(userId, {'customName': next}).catch(error => {
           console.error(error);
-          notify("Failed to save the nickname.")
-          nickname.value = prev;
+          notify("Failed to save the custom name.")
+          customName.value = prev;
         });
       }
     });
 
     onMounted( () => {
       UserService.getSettings(userId).then(settings => {
-        if(settings?.nickname){
-          nickname.value = settings.nickname as string;
+        if(settings?.customName){
+          customName.value = settings.customName as string;
         }
       });
     });
 
     return {
-      nickname,
+      customName,
       router,
 
     }

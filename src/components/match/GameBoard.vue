@@ -51,7 +51,6 @@ export default defineComponent({
     const playerSymbolURL = symbols.getFilename(playerSymbolCode as SymbolCode);
     const opponentSymbolCode = match.opponent?.options.sign;
     const opponentSymbolURL = symbols.getFilename(opponentSymbolCode as SymbolCode);
-    const canMoveTemplate = [MatchStates.waiting_for_player_move, PlayerStates.waiting_for_opponent_move];
     const canMove = ref(false);
     const isBotFindingNextMove = ref(false);
     const isWinningSequence = ref(false);
@@ -65,7 +64,7 @@ export default defineComponent({
 
       isWinningSequence.value = next === MatchStates.sequence_found;
 
-      movingTurnHandler([next, playerState.value, opponentState.value]);
+      turnHandler([next, playerState.value, opponentState.value]);
 
       if(next === MatchStates.shaking_board) {
         shuffle();
@@ -78,15 +77,8 @@ export default defineComponent({
     });
 
     watch([opponentState, matchState], ([nextOpponentState, nextMatchState], [oldOpponentState, oldMatchState]) => {
-      
-      //canMove.value = _.isEqual([nextMatchState, nextOpponentState], canMoveTemplate);
-
       isBotFindingNextMove.value = nextOpponentState === PlayerStates.calculating_next_move;
     }, {deep: true});
-
-    // watch(canMove, (next) => {
-    //   next && setPlayerState(PlayerStates.moving)
-    // });
 
     watch(isWinningSequence, (next) => {
       const winningSequence = match.service?.board.winningSequence;
@@ -119,7 +111,7 @@ export default defineComponent({
       }, 2000);
     }
 
-    function movingTurnHandler(
+    function turnHandler(
       states: [MatchStates, PlayerStates, PlayerStates], 
     ) {
       const [nextMatchState, nextPlayerState, nextOpponentState] = states;

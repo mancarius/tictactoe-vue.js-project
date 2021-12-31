@@ -24,6 +24,7 @@ import removeObservables from "@/helpers/removeObservables";
 import { MatchStates } from "@/helpers/enums/match-states.enum";
 import PlayerService from "@/services/player.service";
 import BoardService from "@/services/board.service";
+import { PlayerType } from "@/helpers/enums/player-type.enum";
 
 export const defaultOptions: MatchPluginOptions = {
   storage: "localStorage",
@@ -131,11 +132,7 @@ export const match: MatchPlugin = {
     const matchSnap = await getDoc(matchRef);
     const match = matchSnap.data() as Partial<MatchService>;
 
-    if (
-      !match ||
-      match.state === MatchStates.terminated ||
-      match.state === MatchStates.closed_by_owner
-    ) {
+    if (!match || match.state === MatchStates.terminated) {
       return null;
     }
 
@@ -154,6 +151,8 @@ export const match: MatchPlugin = {
     const playersQuery = query(playersRef);
     const playersSnap = await getDocs(playersQuery);
     const players = playersSnap.docs.map((doc) => doc.data() as PlayerService);
+
+    console.log("find:", { players });
 
     if (board !== undefined) {
       return { ...match, board, players };
@@ -302,9 +301,16 @@ export const match: MatchPlugin = {
       opponentQuery,
       (snapshot) => {
         snapshot.forEach((doc) => {
-          const {score, shuffleBuffer, canShuffle, lastMoveTimestamp, ...data} = doc.data();
+          const {
+            score,
+            shuffleBuffer,
+            canShuffle,
+            lastMoveTimestamp,
+            ...data
+          } = doc.data() as PlayerService;
           const playerIndex = this.getPlayerIndex(data.uid);
           if (playerIndex !== -1) {
+            console.log("_subscribeRemote > opponent state", data.state);
             this.service?.players[playerIndex].sync(data);
           } else {
             const { uid, displayName, photoURL, options } = data;
@@ -393,6 +399,9 @@ export const match: MatchPlugin = {
    *
    */
   reset() {
-    this.service?.reset();
+    this.player && this.service?.reset(this.player.uid);
+    if (this.service?.type === MatchTypes.PLAYER_VS_COMPUTER) {
+      this.opponent && this.service?.reset(this.opponent.uid);
+    }
   },
 };

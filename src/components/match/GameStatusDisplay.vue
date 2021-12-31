@@ -69,9 +69,9 @@ export default defineComponent({
 
       if(m === MatchStates.sequence_found) {
         const winner = p === PlayerStates.score
-          ? match.player?.nickName 
+          ? match.player?.customName 
           : o === PlayerStates.score 
-            ? match.opponent?.nickName 
+            ? match.opponent?.customName 
             : null;
 
         const message = winner + " scored"
@@ -81,9 +81,9 @@ export default defineComponent({
 
       if(m === MatchStates.terminated) {
         const winner = p === PlayerStates.winner
-          ? match.player?.nickName 
+          ? match.player?.customName 
           : o === PlayerStates.winner 
-            ? match.opponent?.nickName 
+            ? match.opponent?.customName 
             : null;
 
         const message = winner ? winner + " won this match" : "The match ended with a draw"

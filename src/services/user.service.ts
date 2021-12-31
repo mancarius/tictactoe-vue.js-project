@@ -6,19 +6,13 @@ export default class UserService {
   public readonly uid: User["uid"];
   public readonly displayName: User["displayName"];
   public readonly photoURL: User["photoURL"];
-  public settings: User["settings"] | undefined;
+  protected settings: User["settings"];
 
-  constructor({ uid, displayName, photoURL }: User) {
+  constructor({ uid, displayName, photoURL, settings }: User) {
     this.uid = uid;
     this.displayName = displayName;
     this.photoURL = photoURL;
-    UserService.getSettings(uid)
-      .then((settings) => {
-        this.settings = settings;
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    this.settings = settings;
   }
 
   /**

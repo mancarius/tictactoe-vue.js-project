@@ -5,7 +5,7 @@ export type uid = string;
 export type photoURL = string;
 
 export interface userSettings {
-  nickname?: string
+  customName?: string;
 }
 
 

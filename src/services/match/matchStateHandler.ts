@@ -11,15 +11,14 @@ export function stateHandler(
     p1State === PlayerStates.disconnected ||
     p2State === PlayerStates.disconnected
   ) {
-    return MatchStates.terminated;
+    return MatchStates.player_left_the_room;
   }
 
-  // console.group("stateHandler");
-  // console.log("before", {
-  //   matchState: matchState,
-  //   p1State,
-  //   p2State,
-  // });
+  console.log("before", {
+    matchState: matchState,
+    p1State,
+    p2State,
+  });
 
   if (
     /*
@@ -111,12 +110,14 @@ export function stateHandler(
       p2State === PlayerStates.draw)
   ) {
     return MatchStates.terminated;
+  } else if (
+    /*
+     * Waiting for player ready
+     */
+    (matchState === MatchStates.terminated ||
+      matchState === MatchStates.resetting) &&
+    (p1State === PlayerStates.ready || p2State === PlayerStates.ready)
+  ) {
+    return MatchStates.waiting_players_ready;
   }
-
-  // console.log("after", {
-  //   matchState: matchState,
-  //   p1State,
-  //   p2State,
-  // });
-  // console.groupEnd();
 }

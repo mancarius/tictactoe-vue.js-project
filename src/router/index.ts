@@ -18,6 +18,15 @@ const routes: Array<RouteRecordRaw> = [
     },
   },
   {
+    path: "/account/settings",
+    name: Routes.accountSettings,
+    component: () =>
+      import(/* webpackChunkName: "match" */ "../views/Settings.vue"),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
     path: "/:matchType",
     component: () =>
       import(/* webpackChunkName: "match" */ "../views/Match/index.vue"),
@@ -29,7 +38,8 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: "builder",
         name: Routes.builder,
-        component: () => import(/* webpackChunkName: "match" */ "../views/Match/Builder.vue"),
+        component: () =>
+          import(/* webpackChunkName: "match" */ "../views/Match/Builder.vue"),
       },
       {
         path: "room-code",
@@ -39,8 +49,7 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: ":matchId/lobby",
-        name: Routes.lobby
-        ,
+        name: Routes.lobby,
         component: () =>
           import(/* webpackChunkName: "match" */ "../views/Match/Lobby.vue"),
       },
@@ -55,7 +64,7 @@ const routes: Array<RouteRecordRaw> = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(window.location.pathname),
   routes,
 });
 
@@ -63,7 +72,7 @@ router.beforeEach(async (to, from, next) => {
   // check for user authentication
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     const isPvP = to.params.matchType === MatchTypes.PLAYER_VS_PLAYER;
-    
+
     if (!isPvP || store.getters[Getters.USER_IS_AUTHED]) {
       next();
     } else {

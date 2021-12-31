@@ -11,12 +11,14 @@
     </template>
   </Suspense>
   <div class="actions">
-    <my-button outline color="negative" @click="leaveRoom">Exit</my-button>
-    <my-button :loading="ready" push color="primary" @click="ready = !ready" :disabled="typeof playerSymbol !== 'string'">
+    <my-button v-if="!ready" outline color="negative" @click="leaveRoom">Exit</my-button>
+    <my-button :loading="ready" push color="primary" :disabled="!playerSymbol" @click="ready = !ready">
       Ready
       <template v-slot:loading>
-        <q-spinner-radio class="on-left" />
-        Waiting for opponent ready...
+        <div class="nowrap-content">
+          <q-spinner-radio class="on-left" />
+          Waiting for opponent...
+        </div>
       </template>
     </my-button>
   </div>
@@ -92,8 +94,13 @@ export default defineComponent({
     },
 
     mounted() {
-      store.dispatch(Actions.LOADING_STOP);
       this.setPlayerState(PlayerStates.in_lobby);
+      // if(!this.playerSymbol) {
+      //   this.setPlayerState(PlayerStates.in_lobby);
+      // } else {
+      //   this.ready = true;
+      // }
+      store.dispatch(Actions.LOADING_STOP);
     },
 
     methods: {
@@ -127,9 +134,15 @@ export default defineComponent({
   .actions {
     display: flex;
     gap: .5rem;
-    & * {
+    & > * {
       flex: 1;
     }
+  }
+
+  .nowrap-content {
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: nowrap;
   }
 }
 </style>

@@ -17,7 +17,7 @@ import UserService from "./user.service";
 export default class PlayerService extends UserService {
   public options: Player.options = {
     sign: null,
-    customName: this.displayName,
+    customName: this.settings?.customName,
     isOwner: false,
   };
   public state: PlayerStates = PlayerStates.none;
@@ -41,8 +41,6 @@ export default class PlayerService extends UserService {
           typeof target[prop] === "object" && !isTargetArray;
         const isValueObject = typeof value === "object" && !isValueArray;
 
-        //console.log(target['displayName'], 'set', prop, 'to', value);
-
         if (prop === "state" && value === PlayerStates.last_to_move) {
           target.lastMoveTimestamp = Date.now();
         }
@@ -62,7 +60,7 @@ export default class PlayerService extends UserService {
    * @memberof PlayerService
    */
   public reset(): void {
-    this.state = PlayerStates.in_game;
+    this.state = PlayerStates.in_lobby;
     this.score = 0;
     this.shuffleBuffer = 0;
     this.canShuffle = false;
@@ -99,7 +97,7 @@ export default class PlayerService extends UserService {
     return removeObservables(this);
   }
 
-  public get nickName(): string {
+  public get customName(): string {
     return this.options.customName ?? this.displayName;
   }
 

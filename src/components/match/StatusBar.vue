@@ -40,7 +40,7 @@ export default defineComponent({
 
     const opponentName = computed(() => {
       if (opponent.value instanceof PlayerService) {
-        return opponent.value.options.customName.split(" ")[0];
+        return opponent.value.options.customName;
       } else {
         return "";
       }

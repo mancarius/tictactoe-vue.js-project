@@ -1,5 +1,5 @@
 import { Provider } from "@/helpers/enums/provider.enum";
-import { ActionContext, ActionTree } from "vuex";
+import { ActionTree } from "vuex";
 import {
   GoogleAuthProvider,
   FacebookAuthProvider,
@@ -10,6 +10,7 @@ import {
 import { Mutations } from "@/helpers/enums/mutations.enum";
 import { Actions } from "@/helpers/enums/actions.enum";
 import { State } from "vuex/core";
+import UserService from "@/services/user.service";
 
 const actions: ActionTree<State["user"], State> = {
   [Actions.USER_REQUIRE_AUTH](
@@ -40,11 +41,13 @@ const actions: ActionTree<State["user"], State> = {
     if (provider !== undefined) {
       const auth = getAuth();
       await signInWithPopup(auth, provider)
-        .then(({ user }) => {
-          commit(Mutations.USER_SET, user);
+        .then(async ({ user }) => {
+          const settings = await UserService.getSettings(user.uid);
+          commit(Mutations.USER_SET, { ...user, settings });
           commit(Mutations.USER_REQUIRE_AUTH, false);
         })
         .catch((error) => {
+          alert(error.message);
           throw error;
         });
     } else {

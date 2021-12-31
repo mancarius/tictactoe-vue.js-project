@@ -155,14 +155,13 @@ export default class MatchService {
   /**
    *
    *
+   * @param {Player.userId} uid Player who call the reset
    * @memberof MatchService
    */
-  public reset(): void {
+  public reset(uid: Player.userId): void {
     this.state = MatchStates.resetting;
     this.board.reset();
-    this.players.forEach((player) => {
-      player.reset();
-    });
+    this.getPlayer(uid).reset();
   }
 
   /**
@@ -291,9 +290,15 @@ export default class MatchService {
 
     const existsEmptyCells = this.board.emptyCells.length > 0;
 
+    console.log(
+      "_checkGameStatus - existsEmptyCells:",
+      existsEmptyCells,
+      'emptyCells.length', this.board.emptyCells.length
+    );
+
     if (existsEmptyCells) {
       this.state = MatchStates.waiting_for_player_move;
-    } else if (this.nextPlayerToMove) {
+    } else if (this.nextPlayerToMove !== null) {
       const nextPlayer = this.getPlayer(this.nextPlayerToMove);
       const canNextPlayerShuffle = nextPlayer.canShuffle;
       if (canNextPlayerShuffle) {

@@ -1,7 +1,8 @@
 <template>
-    <q-btn :class="classes">
-        <slot></slot>
-    </q-btn>
+  <q-btn :class="classes">
+    <slot v-if="!loading"></slot>
+    <slot v-else name="loading"></slot>
+  </q-btn>
 </template>
 
 <script lang="ts">
@@ -11,6 +12,7 @@ export default defineComponent({
   name: "MyButton",
   props: {
     fullWidth: Boolean,
+    loading: Boolean
   },
   data(){
     return {

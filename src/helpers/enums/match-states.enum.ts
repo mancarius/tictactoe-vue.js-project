@@ -13,7 +13,7 @@ export enum MatchStates {
   checking_game_status = "CHECKING_GAME_STATUS",
   terminated = "TERMINATED",
   resetting = "RESETTING",
-  closed_by_owner = "CLOSED_BY_OWNER",
+  player_left_the_room = "PLAYER_LEFT_THE_ROOM",
   pending = "PENDING",
   error = "ERROR",
 }

@@ -8,7 +8,7 @@ import { defineComponent } from 'vue'
 export default defineComponent({
     name: "Title",
     data: () => ({
-        title: 'Tic Tc Toe'
+        title: process.env.VUE_APP_NAME
     }),
 })
 </script>

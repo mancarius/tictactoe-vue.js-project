@@ -10,7 +10,7 @@ export type score = number;
 
 export interface options {
   sign: sign;
-  customName: string;
+  customName?: string;
   isOwner: isOwner;
 }
 

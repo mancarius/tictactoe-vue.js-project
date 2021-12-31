@@ -1,5 +1,9 @@
 module.exports = {
 
+  publicPath: process.env.NODE_ENV === 'production' ?
+    '/works/vue/tic-tac-toe/':
+    '/',
+
   devServer: {
     port: 8080,
     https: true,

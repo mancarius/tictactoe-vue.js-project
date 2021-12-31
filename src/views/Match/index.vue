@@ -14,7 +14,7 @@ import { useStateHandler } from '@/injectables/state-handler';
 import { useMatch } from '@/plugins/match';
 import router from '@/router';
 import { useQuasar } from 'quasar';
-import { computed, defineComponent, onUnmounted, watch } from 'vue';
+import { computed, defineComponent, onBeforeUnmount, onUnmounted, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
 import { useStore } from 'vuex';
 import { State } from 'vuex/core';
@@ -44,6 +44,8 @@ export default defineComponent({
     onBeforeRouteLeave(async (to, from, next) => {
       const {isRedirect} = to.params;
 
+      console.log({from, to});
+
       if (isRedirect !== undefined) {
         next(true);
       } else {
@@ -61,7 +63,6 @@ export default defineComponent({
             focus: 'cancel',
             persistent: true
           }).onOk(() => {
-            setPlayerState(PlayerStates.disconnected);
             resolve(true)
           }).onCancel(() => 
             resolve(false)
@@ -72,10 +73,11 @@ export default defineComponent({
       }
     });
 
-    onUnmounted(() => {
+    onBeforeUnmount(() => {
       match.service && setPlayerState(PlayerStates.disconnected);
       // unsubscribe plugin subscriptions
       match.subscriptions.forEach((subs) => subs());
+      store.dispatch(Actions.MATCH_EXIT);
     });
 
     function redirectToHome(message: string) {
@@ -97,7 +99,7 @@ export default defineComponent({
           redirectToHome("Something goes wrong. You will be redirect to the home soon");
           break;
         case MatchStates.player_left_the_room:
-          redirectToHome("The opponent left the game. You will be redirect to the home soon");
+          player_state !== PlayerStates.disconnected && redirectToHome("The opponent left the game. You will be redirect to the home soon");
           break;
         default:
           store.dispatch(Actions.LOADING_STOP)

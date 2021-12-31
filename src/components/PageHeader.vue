@@ -50,6 +50,7 @@ export default defineComponent({
     const visible = ref(true);
 
     watch(() => route.name, (nextRoute) => {
+      console.log(route, nextRoute);
       visible.value = nextRoute !== Routes.game;
     });
 

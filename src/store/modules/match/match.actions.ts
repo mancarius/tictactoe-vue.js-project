@@ -42,6 +42,10 @@ const actions: ActionTree<State["match"], State> = {
       commit(Mutations.OPPONENT_SET_STATE, payload);
     }
   },
+
+  [Actions.MATCH_EXIT]: ({ commit }) => {
+    commit(Mutations.MATCH_EXIT);
+  },
 };
 
 export default actions;
