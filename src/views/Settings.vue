@@ -51,7 +51,6 @@ export default defineComponent({
     let customName: Ref<string | null> = ref(null);
 
     watch(customName, (next, prev) => {
-      console.log('customName changed:', next);
       if( next ) {
         UserService.saveSettings(userId, {'customName': next}).catch(error => {
           console.error(error);

@@ -17,7 +17,7 @@
 <script lang="ts">
 import { Getters } from '@/helpers/enums/getters.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
-import { useStateHandler } from '@/injectables/state-handler';
+import { useSetStates } from '@/injectables/setStates';
 import { useMatch } from '@/plugins/match'
 import BotService from '@/services/bot.service';
 import PlayerService from '@/services/player.service';
@@ -27,7 +27,7 @@ import { useStore } from 'vuex';
 export default defineComponent({
   setup() {
     const match = useMatch();
-    const { setPlayerState } = useStateHandler();
+    const { setPlayerState } = useSetStates();
     const store = useStore();
     const matchState = computed(() => store.getters[Getters.MATCH_STATE]);
     const playerState = computed(() => store.getters[Getters.PLAYER_STATE]);

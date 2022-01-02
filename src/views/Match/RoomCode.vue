@@ -42,7 +42,7 @@ import { useStore } from 'vuex';
 import { Actions } from '@/helpers/enums/actions.enum';
 import { useQuasar } from 'quasar';
 import MatchService from '@/services/match/match.service';
-import { useStateHandler } from '@/injectables/state-handler';
+import { useSetStates } from '@/injectables/setStates';
 import { useRoute, useRouter } from 'vue-router';
 
 

@@ -5,6 +5,8 @@ import {
   FacebookAuthProvider,
   getAuth,
   signInWithPopup,
+  setPersistence,
+  browserSessionPersistence,
   signOut,
 } from "@firebase/auth";
 import { Mutations } from "@/helpers/enums/mutations.enum";
@@ -27,6 +29,13 @@ const actions: ActionTree<State["user"], State> = {
     providerType: Provider
   ): Promise<void> {
     let provider;
+    const auth = getAuth();
+
+    try {
+      await setPersistence(auth, browserSessionPersistence);
+    } catch(error: any) {
+      throw error;
+    }
 
     switch (providerType) {
       case Provider.facebook:
@@ -39,7 +48,6 @@ const actions: ActionTree<State["user"], State> = {
     }
 
     if (provider !== undefined) {
-      const auth = getAuth();
       await signInWithPopup(auth, provider)
         .then(async ({ user }) => {
           const settings = await UserService.getSettings(user.uid);

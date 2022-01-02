@@ -34,7 +34,7 @@ import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
 import { Routes } from '@/helpers/enums/routes.enum';
-import { useStateHandler } from '@/injectables/state-handler';
+import { useSetStates } from '@/injectables/setStates';
 import { useMatch } from '@/plugins/match';
 import store from '@/store';
 import { options } from '@/types/player.interface';
@@ -52,7 +52,7 @@ export default defineComponent({
       const router = useRouter();
       const route = useRoute();
       const store = useStore();
-      const { setPlayerState } = useStateHandler();
+      const { setPlayerState } = useSetStates();
       const matchState = computed(() => store.getters[Getters.MATCH_STATE]);
       const ready = ref(match.player!.isReady);
       const opponentSymbol = computed(() => match.opponent!.options?.sign);
@@ -95,11 +95,6 @@ export default defineComponent({
 
     mounted() {
       this.setPlayerState(PlayerStates.in_lobby);
-      // if(!this.playerSymbol) {
-      //   this.setPlayerState(PlayerStates.in_lobby);
-      // } else {
-      //   this.ready = true;
-      // }
       store.dispatch(Actions.LOADING_STOP);
     },
 

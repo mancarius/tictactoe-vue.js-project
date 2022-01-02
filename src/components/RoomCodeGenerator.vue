@@ -6,8 +6,8 @@
       <template #default>
         <template  v-if="roomCode">
           <div class="fake-input room-code-field">
-            <span id="room-code" ref="roomCode">{{roomCode}}</span>
-            <my-button color="primary" @click="copyCodeToClipboard">Copy</my-button>
+            <span id="room-code">{{roomCode}}</span>
+            <my-button color="primary" @click="shareCode">Share link</my-button>
           </div>
           <p>Share this room code with the friend you want to invite to play.</p>
         </template>
@@ -23,16 +23,9 @@ import Card from '@/components/Card.vue';
 import MyButton from '@/components/MyButton.vue';
 import { Actions } from '@/helpers/enums/actions.enum';
 import store from '@/store';
-import MatchPlugin from '@/plugins/match/types/match-plugin.interface';
 import { defineComponent } from 'vue';
 import { useMatch } from '@/plugins/match';
 
-
-declare module "@vue/runtime-core" {
-  interface ComponentCustomProperties {
-    $match: MatchPlugin;
-  }
-}
 
 export default defineComponent({
   name:"RoomCodeGenerator",
@@ -58,9 +51,33 @@ export default defineComponent({
   },
 
   methods: {
-    copyCodeToClipboard() {
-      navigator.clipboard.writeText(this.$match.service?.id as string);
+    composeLink(code: string): string {
+      const baseUrl = window.location.origin;
+      const fullPath = process.env.VUE_APP_BASE_URL as string;
+      return baseUrl + fullPath + '?roomCode=' + code;
+    },
+    copyToClipboard(content: string) {
+      navigator.clipboard.writeText(content);
       this.$q.notify({message: 'Code copied on te clipboard'});
+    },
+    shareCode() {
+      if (this.roomCode) {
+        const shareData = {
+          title: 'Tic Tac Toe',
+          text: 'Join the room and play with me',
+          url: this.composeLink(this.roomCode)
+        }
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          navigator.share(shareData)
+            .catch(error => {
+              this.copyToClipboard(shareData.url);
+            });
+        } else {
+          this.copyToClipboard(shareData.url);
+        }
+      }
     }
   },
 })

@@ -34,7 +34,10 @@ export default defineComponent({
     const $q = useQuasar();
     const {requireAuth} = useUserAuth();
     const {subscribeMatch, subscribePlayer, subscribeOpponent} = useMatchObservables();
-    const roomCode = ref<string>();
+    const roomCodeByQuery = router.currentRoute.value.query.roomCode;
+    const roomCode = ref<string>( typeof roomCodeByQuery === 'string' ? roomCodeByQuery : '');
+
+    console.log();
 
     const joinRoom = async () => {
       // perform user auth if needed

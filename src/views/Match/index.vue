@@ -10,7 +10,7 @@ import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
 import { Routes } from '@/helpers/enums/routes.enum';
-import { useStateHandler } from '@/injectables/state-handler';
+import { useSetStates } from '@/injectables/setStates';
 import { useMatch } from '@/plugins/match';
 import router from '@/router';
 import { useQuasar } from 'quasar';
@@ -34,7 +34,7 @@ export default defineComponent({
   setup() {
     const match = useMatch();
     const store = useStore<State>();
-    const { setPlayerState } = useStateHandler();
+    const { setPlayerState } = useSetStates();
     const { dialog, notify } = useQuasar();
     const matchState = computed<MatchStates>(() => store.getters[Getters.MATCH_STATE]);
     const playerState = computed<PlayerStates>(() => store.getters[Getters.PLAYER_STATE]);

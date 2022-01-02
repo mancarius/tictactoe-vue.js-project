@@ -81,6 +81,8 @@ export const match: MatchPlugin = {
         _createdAt: Timestamp.now(),
       };
 
+      console.log({match})
+
       board = { ...(board as any) };
 
       players = players.map((player) => ({

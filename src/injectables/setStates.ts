@@ -2,7 +2,7 @@ import { MatchStates } from "@/helpers/enums/match-states.enum";
 import { PlayerStates } from "@/helpers/enums/player-states.enum";
 import { match } from "@/plugins/match/src/match";
 
-export function useStateHandler() {
+export function useSetStates() {
   const setPlayerState = (state: PlayerStates) => {
     console.log("setPlayerState", state);
     if (match.player)

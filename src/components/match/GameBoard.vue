@@ -19,7 +19,7 @@ import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
 import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
-import { useStateHandler } from '@/injectables/state-handler';
+import { useSetStates } from '@/injectables/setStates';
 import { useMatch } from '@/plugins/match';
 import { useSymbols } from '@/plugins/symbols';
 import { SymbolCode } from '@/plugins/symbols/types/symbols-plugin.interface';
@@ -58,7 +58,7 @@ export default defineComponent({
       ['cols'+columns]: true, 
       disabled: !canMove.value
     }));
-    const {setPlayerState, setOpponentState} = useStateHandler();
+    const {setPlayerState, setOpponentState} = useSetStates();
 
     watch(matchState, (next) => {
 

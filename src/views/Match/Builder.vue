@@ -102,7 +102,7 @@ import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
 import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import { Routes } from '@/helpers/enums/routes.enum';
-import { useStateHandler } from '@/injectables/state-handler';
+import { useSetStates } from '@/injectables/setStates';
 import MatchService from '@/services/match/match.service';
 import store from '@/store';
 import { useQuasar } from 'quasar';
@@ -113,7 +113,7 @@ export default defineComponent({
   components: { MyButton },
   setup() {
     const route = useRoute();
-    const { setMatchState } = useStateHandler();
+    const { setMatchState } = useSetStates();
     const { matchType } = route.params;
     const device = {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -205,7 +205,7 @@ export default defineComponent({
           this.$match.service.shuffleActivationTarget = this.shuffle.activation_threshold;
 
           this.setMatchState(MatchStates.builded);
-          // sync match and layer state in store
+          // sync match and player state in store
           this.$match.service?.subscribe(({state}) => {
             if(state !== undefined) store.dispatch(Actions.MATCH_SET_STATE, state);
           });

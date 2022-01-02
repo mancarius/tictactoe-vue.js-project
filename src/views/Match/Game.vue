@@ -23,7 +23,7 @@ import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
 import { Routes } from '@/helpers/enums/routes.enum';
-import { useStateHandler } from '@/injectables/state-handler';
+import { useSetStates } from '@/injectables/setStates';
 import { useMatch } from '@/plugins/match';
 import _ from 'lodash';
 import { useQuasar } from 'quasar';
@@ -40,12 +40,11 @@ export default defineComponent({
     const match = useMatch();
     const router = useRouter();
     const store = useStore();
-    const { setPlayerState } = useStateHandler();
+    const { setPlayerState } = useSetStates();
     const { dialog } = useQuasar();
     const useShuffling = match.service?.useShuffling;
     const matchState = computed(() => store.getters[Getters.MATCH_STATE]);
     const playerState = computed(() => store.getters[Getters.PLAYER_STATE]);
-    const isOwner = match.player?.isOwner as boolean;
     let dialogInstance:any = null;
 
     watch(matchState, (next) => {
