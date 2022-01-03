@@ -1,8 +1,8 @@
 import * as Board from "@/types/board-types.interface";
 import _ from "lodash";
 import BoardService from "./board.service";
-import { Move } from "@/types/Move.interface";
-import { PlayerService } from "./player.service";
+import { Move } from "@/types/move.interface";
+import PlayerService from "./player.service";
 import Worker from "worker-loader!@/workers/crawler.worker";
 
 export default class BestMoveFinder {
@@ -24,7 +24,7 @@ export default class BestMoveFinder {
    */
   public async find(): Promise<Move[] | null> {
     const moves = await this._bestPlayerMoves();
-    return moves === null ? moves : moves.flat();
+    return moves === null ? null : moves.flat();
   }
 
   /**
@@ -38,7 +38,7 @@ export default class BestMoveFinder {
     const goodMoves = (await this._goodPlayerMoves())?.flat() ?? null;
 
     if (goodMoves === null) return null;
-    
+
     if (goodMoves.length > 1) {
       // sort moves by path length (asc) and sequence length (desc)
       const goodMovesSorted = _.sortBy(
@@ -144,10 +144,10 @@ export default class BestMoveFinder {
   ): Promise<Move[]> {
     return new Promise((resolve, reject) => {
       worker.postMessage([
-        this._board.configurations,
+        _.cloneDeep(this._board.configurations),
         this._player.uid,
-        this._board.cells,
-        startingEmptyCells,
+        _.cloneDeep(this._board.cells),
+        _.cloneDeep(startingEmptyCells),
       ]);
 
       worker.addEventListener(

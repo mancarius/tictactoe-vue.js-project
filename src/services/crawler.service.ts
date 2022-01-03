@@ -1,7 +1,7 @@
 import * as Board from "@/types/board-types.interface";
 import _ from "lodash";
 import BoardService from "./board.service";
-import { Move } from "@/types/Move.interface";
+import { Move } from "@/types/move.interface";
 import SequenceFinderService from "./sequence-finder.service";
 
 interface Crawler {
@@ -27,7 +27,7 @@ export default class CrawlerService {
    *
    * @param {Board.cell[]} virtualCellCollection
    * @param {Crawler["path"]} [path=[]]
-   * @return {*}
+   * @return {Promise<Move[] | null>}
    * @memberof CrawlerService
    */
   public async launch(
@@ -54,12 +54,10 @@ export default class CrawlerService {
    *
    * @private
    * @param {Promise<Promise<Move[]>[]>[]} promises
-   * @return {*}  {Promise<Move[]>}
+   * @return {Promise<any[]>}
    * @memberof CrawlerService
    */
-  private async _resolveCrawlers(
-    promises: any[]
-  ): Promise<any[]> {
+  private async _resolveCrawlers(promises: any[]): Promise<any[]> {
     const settledPromises = await Promise.allSettled(promises.flat());
     const fulfilleds = [];
     let anyPromise = false;
@@ -169,15 +167,13 @@ export default class CrawlerService {
    *
    * @protected
    * @param {{
-   *     virtualCell: Board.cell;
    *     sequenceFinder: Crawler["sequenceFinder"];
-   *     path?: Crawler["path"];
+   *     path: Move["path"];
    *   }} {
-   *     virtualCell,
    *     sequenceFinder,
-   *     path = [],
+   *     path,
    *   }
-   * @return {*}  {Promise<any>}
+   * @return {*}  {Promise<Promise<Move[]>[]>}
    * @memberof CrawlerService
    */
   protected async _sendCrawler({

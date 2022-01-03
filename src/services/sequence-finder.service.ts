@@ -184,7 +184,7 @@ export default class SequenceFinderService extends BoardService {
         ...this._checkNextCell(cell, after),
       ].sort((a, b) => a - b);
 
-      sequence.length >= this._config.winning_sequence_length
+      sequence.length >= this.configurations.winning_sequence_length
         ? resolve([...sequence])
         : reject([...sequence]);
     });

@@ -1,8 +1,20 @@
+import filterDifferentFields from "@/helpers/filterDifferentFields";
+import removeObservables from "@/helpers/removeObservables";
 import * as Board from "@/types/board-types.interface";
+import Player from "@/types/player.interface";
 import _ from "lodash";
+import {
+  Observer,
+  ReplaySubject,
+  Subscription,
+} from "rxjs";
 
 export default class BoardService {
-  protected _config: Board.configurations = {
+  private _changes$: ReplaySubject<Partial<BoardService>> = new ReplaySubject(
+    1
+  );
+
+  public readonly configurations: Board.configurations = {
     rows: 3,
     columns: 3,
     winning_sequence_length: 3,
@@ -10,9 +22,74 @@ export default class BoardService {
 
   protected _cellCollection: Board.cell[] = [];
 
+  public _lastUpdatedCells: number[] = [];
+
+  public winningSequence: Board.WinningSequence = false;
+
   constructor(config: Partial<Board.configurations> = {}) {
-    this._config = { ...this._config, ...config };
-    this._init();
+    this.configurations = { ...this.configurations, ...config };
+    this._initCells();
+
+    return new Proxy(this, {
+      get: (target: BoardService, prop: string | symbol, receiver: any) => {
+        //remove empty cells from lastUpdatedCells
+        if (prop === "_lastUpdatedCells") {
+          target[prop] = target[prop].filter(
+            (cellIndex: number) =>
+              target["_cellCollection"][cellIndex].player !== null
+          );
+        }
+
+        return Reflect.get(target, prop, receiver);
+      },
+      set: (target: BoardService, prop: string | symbol, value: any) => {
+        const isArray = Array.isArray(Reflect.get(target, prop));
+        const isObject =
+          typeof Reflect.get(target, prop) === "object" && !isArray;
+
+        Reflect.set(
+          target,
+          prop,
+          isObject ? { ...Reflect.get(target, prop), ...value } : value
+        );
+
+        if (prop === "_cellCollection")
+          this._changes$.next({ [prop as string]: value as Board.cell[] });
+
+        return true;
+      },
+    });
+  }
+
+  /**
+   *
+   *
+   * @static
+   * @param {Partial<BoardService>} data
+   * @return {*}
+   * @memberof BoardService
+   */
+  public static create(data: Partial<BoardService>) {
+    const { configurations } = data;
+    if (typeof configurations === "object") {
+      const board = new BoardService(configurations);
+      board.sync(data);
+      return board;
+    } else {
+      throw new TypeError("configurations misses or are invalid");
+    }
+  }
+
+  /**
+   * Returns an object instance without observables
+   *
+   * @return {*}  {string}
+   * @memberof BoardService
+   */
+  public toObject(): {
+    [x: string]: any;
+  } {
+    return removeObservables(this);
   }
 
   /**
@@ -21,14 +98,15 @@ export default class BoardService {
    * @private
    * @memberof BoardService
    */
-  private _init() {
-    const { rows, columns } = this._config;
+  private _initCells() {
+    const { rows, columns } = this.configurations;
     const cellsLength = rows * columns;
+    const collection = [];
 
     for (let i = 1; i <= cellsLength; i++) {
       const y = this._getRow(i);
       const x = this._getColumn(i, y);
-      this._cellCollection.push({
+      collection.push({
         player: null,
         coords: {
           y,
@@ -36,6 +114,19 @@ export default class BoardService {
         },
       });
     }
+
+    this._cellCollection = collection;
+  }
+
+  /**
+   *
+   *
+   * @memberof BoardService
+   */
+  public reset(): void {
+    this._initCells();
+    this._lastUpdatedCells = [];
+    this.winningSequence = false;
   }
 
   /**
@@ -45,7 +136,7 @@ export default class BoardService {
    * @returns
    */
   private _getRow(position: number): number {
-    return Math.ceil(position / this._config.columns);
+    return Math.ceil(position / this.configurations.columns);
   }
 
   /**
@@ -56,18 +147,7 @@ export default class BoardService {
    * @returns
    */
   private _getColumn(position: number, row: number): number {
-    return position - (row - 1) * this._config.columns;
-  }
-
-  /**
-   *
-   *
-   * @readonly
-   * @type {Board.configurations}
-   * @memberof BoardService
-   */
-  public get configurations(): Board.configurations {
-    return this._config;
+    return position - (row - 1) * this.configurations.columns;
   }
 
   /**
@@ -88,11 +168,63 @@ export default class BoardService {
    * @param props {Partial<Board.cell>} A cell object partial
    */
   public updateCell(index: number, props: Partial<Board.cell>): void {
-    BoardService.updateCellAndReturnNewCells(
+    this._cellCollection = BoardService.updateCellAndReturnNewCells(
       index,
       props,
       this._cellCollection
     );
+
+    this._lastUpdatedCells = [index];
+  }
+
+  /**
+   *
+   *
+   * @memberof BoardService
+   */
+  public get lastUpdatedCells() {
+    return this._lastUpdatedCells;
+  }
+
+  /**
+   *
+   *
+   * @memberof BoardService
+   */
+  public static getUpdatedCells(
+    base: Board.cell[],
+    source: Board.cell[]
+  ): number[] {
+    const temp: number[] = [];
+
+    base.forEach((cell, index) => {
+      if (cell.player !== source[index].player) temp.push(index);
+    });
+
+    return temp;
+  }
+
+  /**
+   *
+   *
+   * @memberof BoardService
+   */
+  public shuffleCells(): void {
+    const tempCells = _.shuffle(this.cells);
+
+    this._cellCollection = this._cellCollection.map((cell, index) => {
+      return { ...cell, player: tempCells[index].player };
+    });
+
+    const notEmptyCells: number[] = [];
+
+    this.cells.forEach(({ player }, index) => {
+      if (typeof player === "string") {
+        notEmptyCells.push(index);
+      }
+    });
+
+    this._lastUpdatedCells = notEmptyCells;
   }
 
   /**
@@ -193,8 +325,7 @@ export default class BoardService {
   public static getEmptyCells(cells: Board.cell[]): Board.cell[] {
     const emptyCells: Board.cell[] = [];
     for (let i = 0; i < cells.length; i++) {
-      if (cells[i].player === null)
-        emptyCells.push(cells[i]);
+      if (cells[i].player === null) emptyCells.push(cells[i]);
     }
 
     return emptyCells;
@@ -207,12 +338,90 @@ export default class BoardService {
    * @return {*}  {Board.cell[]}
    * @memberof BoardService
    */
-  public getPlayerCells(player: Board.cell['player']): Board.cell[] {
+  public getPlayerCells(uid: Player["uid"]): Board.cell[] {
     const playerCells: Board.cell[] = [];
     for (let i = 0; i < this.cells.length; i++) {
-      if (this.cells[i].player === player) playerCells.push(this.cells[i]);
+      if (this.cells[i].player === uid) playerCells.push(this.cells[i]);
     }
 
     return playerCells;
+  }
+
+  /**
+   *
+   *
+   * @memberof BoardService
+   */
+  public clearWinningCells(): void {
+    if (this.winningSequence) {
+      const sequence = this.winningSequence.sequence;
+      // clear cells
+      sequence.map((cellIndex) => {
+        const cell = this._cellCollection[cellIndex];
+        this._cellCollection[cellIndex] = { ...cell, player: null };
+      });
+
+      this.winningSequence = false;
+    }
+  }
+
+  /**
+   *
+   * @param data
+   */
+  public sync(data: { [x: string]: any }): void {
+    if (!data) return;
+    const filteredFields = filterDifferentFields(this, data);
+
+    for (const [name, value] of Object.entries(filteredFields)) {
+      const isPublic = !name.startsWith("_");
+
+      if (name === "_cellCollection") {
+        this._lastUpdatedCells = BoardService.getUpdatedCells(
+          this.cells,
+          value
+        );
+      }
+
+      if (isPublic) {
+        this[name as keyof this] = value;
+        continue;
+      } else {
+        const setterName = name.substr(1);
+        const proto = Object.getPrototypeOf(this);
+        const propertyDescriptors = Object.getOwnPropertyDescriptors(proto);
+        const hasSetter =
+          typeof propertyDescriptors[setterName]?.set === "function";
+        if (hasSetter) {
+          this[setterName as keyof this] = value;
+        } else {
+          this[name as keyof this] = value;
+        }
+      }
+    }
+  }
+
+  /**
+   *
+   */
+  public subscribe(
+    callback:
+      | Partial<Observer<Partial<BoardService> | undefined>>
+      | ((data: Partial<BoardService> | undefined) => void)
+  ): Subscription {
+    const props =
+      typeof callback === "function"
+        ? {
+            next: (data: Partial<BoardService> | undefined) =>
+              data && callback(data),
+            error: (error: any) => {
+              throw error;
+            },
+          }
+        : Reflect.has(callback, "next")
+        ? callback
+        : undefined;
+
+    return this._changes$.subscribe(props);
   }
 }

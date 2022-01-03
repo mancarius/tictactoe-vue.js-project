@@ -1,0 +1,9 @@
+@import './quasar.variables.scss';
+@import '~quasar-styl';
+@import '~quasar-addon-styl';
+
+
+.q-btn--flat,
+.q-field__native {
+    box-shadow: none !important;
+}
