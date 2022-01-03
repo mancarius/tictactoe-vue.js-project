@@ -17,6 +17,7 @@
             <q-popup-edit 
               v-model="customName" 
               buttons 
+              color="accent"
               persistent 
               title="Customize your name" 
               v-slot="scope">
@@ -51,8 +52,9 @@ export default defineComponent({
     const router = useRouter();
     const { notify } = useQuasar();
     const user = store.getters[Getters.USER_DATA];
-    let customName: Ref<string | null> = ref(null);
-    const { settings } = store.getters[Getters.USER_DATA];
+    const { settings } = user;
+    const customName: Ref<string | null> = ref(null);
+
     if(settings?.customName){
       customName.value = settings.customName as string;
     }
@@ -61,7 +63,7 @@ export default defineComponent({
       if( next ) {
         saveUserSettings(user.uid, {'customName': next})
           .then(() => {
-            store.commit(Mutations.USER_SET, {...user, settings: next})
+            store.commit(Mutations.USER_SET, { ...user, settings: { customName: next } })
           })
           .catch(error => {
             console.error(error);
