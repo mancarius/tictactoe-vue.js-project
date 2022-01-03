@@ -62,7 +62,7 @@ export default class WorkerHelper {
    * @param {*} eventName
    * @param {*} callback
    */
-  on(eventName: any, callback: Function) {
+  on(eventName: any, callback: () => any) {
     this.events[eventName] = callback;
   }
 }
