@@ -1,7 +1,7 @@
 <template>
     <form class="body" @submit.prevent="joinRoom">
         <input type="text" outlined placeholder="Insert the room code" ref="input" v-model="roomCode" />
-        <q-btn color="primary" type="submit">Join</q-btn>
+        <q-btn color="accent" type="submit">Join</q-btn>
     </form>
 </template>
 
@@ -11,7 +11,7 @@ import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import MatchService from '@/services/match/match.service';
 import { useQuasar } from 'quasar';
-import { defineComponent, ref } from 'vue'
+import { defineComponent, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 import { useMatch } from '@/plugins/match';
@@ -36,8 +36,6 @@ export default defineComponent({
     const {subscribeMatch, subscribePlayer, subscribeOpponent} = useMatchObservables();
     const roomCodeByQuery = router.currentRoute.value.query.roomCode;
     const roomCode = ref<string>( typeof roomCodeByQuery === 'string' ? roomCodeByQuery : '');
-
-    console.log();
 
     const joinRoom = async () => {
       // perform user auth if needed
@@ -87,6 +85,13 @@ export default defineComponent({
         }
       });
     }
+
+
+    onMounted(() => {
+      if(typeof roomCodeByQuery === 'string' && roomCodeByQuery.trim().length > 0) {
+        joinRoom();
+      }
+    });
 
 
     return {
