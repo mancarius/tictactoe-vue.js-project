@@ -9,7 +9,7 @@ export default class WorkerHelper {
    * @param {String} scriptPath
    */
   constructor(scriptPath: string) {
-    const _this: any = this;
+    const _this = this;
     this.worker = new Worker(scriptPath);
     this.events = {};
 
