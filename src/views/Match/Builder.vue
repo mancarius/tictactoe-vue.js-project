@@ -105,7 +105,6 @@ import { Routes } from '@/helpers/enums/routes.enum';
 import { useSetStates } from '@/injectables/setStates';
 import MatchService from '@/services/match/match.service';
 import store from '@/store';
-import { useQuasar } from 'quasar';
 import { defineComponent, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router';
 
@@ -144,7 +143,7 @@ export default defineComponent({
     });
 
     function getMaxAvailableRows() {
-      if(device.memory >= 8 && device.threads >= 8) {
+      if(device.memory > 8 && device.threads > 8) {
         return 4
       } else if( device.threads >= 8 && board.columns === 3) {
         return 4
@@ -154,9 +153,9 @@ export default defineComponent({
     }
 
     function getMaxAvailableCols() {
-      if(device.memory >= 16 && device.threads >= 8) {
+      if(device.memory > 8 && device.threads > 8) {
         return 4
-      } else if( device.threads >= 8 && board.rows === 3) {
+      } else if( device.threads > 8 && board.rows === 3) {
         return 4
       } else {
         return 3
@@ -189,7 +188,7 @@ export default defineComponent({
 
   methods: {
     leaveRoom () {
-      this.$router.push({name: Routes.home})
+      this.$router.push({name: Routes.home, params: {isRedirect: 1}})
     },
 
     createRoom() {
@@ -218,9 +217,10 @@ export default defineComponent({
       })
       .catch (error => {
         console.error(error);
-        const { notify } = useQuasar();
-        notify({message: "I can't build the room now."});
-        this.$router.push({name: "Home"});
+        this.$q.notify({message: "I can't build the room now."});
+        setTimeout(() => {
+          this.$router.push({name: "Home", params: {isRedirect: 1}});
+        }, 2000);
       });
     }
   }

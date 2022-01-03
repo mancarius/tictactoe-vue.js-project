@@ -24,7 +24,7 @@ import removeObservables from "@/helpers/removeObservables";
 import { MatchStates } from "@/helpers/enums/match-states.enum";
 import PlayerService from "@/services/player.service";
 import BoardService from "@/services/board.service";
-import { PlayerType } from "@/helpers/enums/player-type.enum";
+import User from "@/types/user.interface";
 
 export const defaultOptions: MatchPluginOptions = {
   storage: "localStorage",
@@ -81,7 +81,7 @@ export const match: MatchPlugin = {
         _createdAt: Timestamp.now(),
       };
 
-      console.log({match})
+      console.log({ players });
 
       board = { ...(board as any) };
 
