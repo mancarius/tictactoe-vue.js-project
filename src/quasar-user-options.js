@@ -8,20 +8,6 @@ import {
 
 // To be used on app.use(Quasar, { ... })
 export default {
-  config: {
-    brand: {
-      primary: '#f5f0dd',
-      secondary: '#f1e9f4',
-      accent: '#7ee0df',
-
-      dark: '#383838',
-
-      positive: '#66ba7a',
-      negative: '#ba5965',
-      info: '#a6d7e0',
-      warning: '#f0cb67'
-    }
-  },
   plugins: {
     Notify,
     Dialog

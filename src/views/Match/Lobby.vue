@@ -12,7 +12,7 @@
   </Suspense>
   <div class="actions">
     <my-button v-if="!ready" outline color="negative" @click="leaveRoom">Exit</my-button>
-    <my-button :loading="ready" push color="primary" :disabled="!playerSymbol" @click="ready = !ready">
+    <my-button :loading="ready" push color="accent" :disabled="!playerSymbol" @click="ready = !ready">
       Ready
       <template v-slot:loading>
         <div class="nowrap-content">

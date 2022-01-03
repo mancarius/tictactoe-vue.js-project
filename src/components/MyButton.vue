@@ -28,8 +28,4 @@ export default defineComponent({
   .full-width {
     width: 100%;
   }
-
-  .text-white {
-    color: inherit !important;
-  }
 </style>

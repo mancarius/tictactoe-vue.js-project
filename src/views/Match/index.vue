@@ -14,7 +14,7 @@ import { useSetStates } from '@/injectables/setStates';
 import { useMatch } from '@/plugins/match';
 import router from '@/router';
 import { useQuasar } from 'quasar';
-import { computed, defineComponent, onBeforeUnmount, onUnmounted, watch } from 'vue';
+import { computed, defineComponent, onBeforeUnmount, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
 import { useStore } from 'vuex';
 import { State } from 'vuex/core';
@@ -44,8 +44,6 @@ export default defineComponent({
     onBeforeRouteLeave(async (to, from, next) => {
       const {isRedirect} = to.params;
 
-      console.log({from, to});
-
       if (isRedirect !== undefined) {
         next(true);
       } else {
@@ -54,7 +52,7 @@ export default defineComponent({
             title: 'Confirm',
             message: 'You are going to left the room. Are you sure?',
             ok: {
-              color: 'primary'
+              color: 'accent'
             },
             cancel: {
               color: "negative",

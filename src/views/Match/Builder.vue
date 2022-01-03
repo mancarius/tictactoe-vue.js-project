@@ -86,7 +86,7 @@
 
     <div class="actions">
       <my-button outline color="negative" @click="leaveRoom">Exit</my-button>
-      <my-button push color="primary" @click="createRoom">
+      <my-button push color="accent" @click="createRoom">
         Create room
       </my-button>
     </div>

@@ -72,7 +72,7 @@ export default defineComponent({
 
       &.selected {
         .image {
-          filter: drop-shadow(0 0 3px red);
+          filter: drop-shadow(0 0 5px #9838bb);
         }
       }
       

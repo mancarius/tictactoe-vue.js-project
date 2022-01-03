@@ -17,7 +17,7 @@ import UserService from "./user.service";
 export default class PlayerService extends UserService {
   public options: Player.options = {
     sign: null,
-    customName: this.settings?.customName,
+    customName: this.settings?.customName ?? this.displayName,
     isOwner: false,
   };
   public state: PlayerStates = PlayerStates.none;

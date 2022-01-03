@@ -7,7 +7,7 @@
         <template  v-if="roomCode">
           <div class="fake-input room-code-field">
             <span id="room-code">{{roomCode}}</span>
-            <my-button color="primary" @click="shareCode">Share link</my-button>
+            <my-button color="accent" @click="shareCode">Share</my-button>
           </div>
           <p>Share this room code with the friend you want to invite to play.</p>
         </template>
@@ -58,7 +58,7 @@ export default defineComponent({
     },
     copyToClipboard(content: string) {
       navigator.clipboard.writeText(content);
-      this.$q.notify({message: 'Code copied on te clipboard'});
+      this.$q.notify({message: 'Link copied on te clipboard'});
     },
     shareCode() {
       if (this.roomCode) {

@@ -117,8 +117,6 @@ export default defineComponent({
       const [nextMatchState, nextPlayerState, nextOpponentState] = states;
       const isGameStart = nextMatchState === MatchStates.started;
 
-      console.log(...states);
-
       if (isGameStart) {
         const isOwner = match.player?.isOwner ?? false;
         isOwner && setFirstMove();
@@ -141,7 +139,6 @@ export default defineComponent({
         ? match.player?.uid === nextPlayerToMove
         : opponentState.value === PlayerStates.waiting_for_opponent_move || opponentState.value === PlayerStates.last_to_move;
 
-      console.log({isPlayerTurn, isOpponentTurn});
       if (isOpponentTurn) {
         matchType === MatchTypes.PLAYER_VS_COMPUTER && setOpponentState(PlayerStates.moving);
         setPlayerState(PlayerStates.waiting_for_opponent_move);

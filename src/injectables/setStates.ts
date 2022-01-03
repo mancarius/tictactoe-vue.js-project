@@ -4,7 +4,6 @@ import { match } from "@/plugins/match/src/match";
 
 export function useSetStates() {
   const setPlayerState = (state: PlayerStates) => {
-    console.log("setPlayerState", state);
     if (match.player)
       match.player.state !== state && (match.player.state = state);
     else throw new Error("Player is not initialized");

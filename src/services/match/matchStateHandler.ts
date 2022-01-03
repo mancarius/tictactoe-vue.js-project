@@ -14,12 +14,6 @@ export function stateHandler(
     return MatchStates.player_left_the_room;
   }
 
-  console.log("before", {
-    matchState: matchState,
-    p1State,
-    p2State,
-  });
-
   if (
     /*
      * Waiting player ready

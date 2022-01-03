@@ -4,7 +4,6 @@ import Worker from "worker-loader!@/workers/crawler.worker";
 export default class CrawlerDemoService {
   private _boardConfigs: Board.configurations;
   private _player: Board.cell["player"];
-  private _crawler: Worker | undefined;
   public promise: undefined | Promise<any>;
 
   constructor(
@@ -23,7 +22,6 @@ export default class CrawlerDemoService {
         crawler.postMessage([this._boardConfigs, this._player, virtualCellCollection]);
 
         crawler.addEventListener("message", (e: any) => {
-          console.log("Received the following message:", e.data);
           resolve(e.data);
         });
       });

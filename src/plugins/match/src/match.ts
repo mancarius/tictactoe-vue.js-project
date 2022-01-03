@@ -81,8 +81,6 @@ export const match: MatchPlugin = {
         _createdAt: Timestamp.now(),
       };
 
-      console.log({ players });
-
       board = { ...(board as any) };
 
       players = players.map((player) => ({
@@ -153,8 +151,6 @@ export const match: MatchPlugin = {
     const playersQuery = query(playersRef);
     const playersSnap = await getDocs(playersQuery);
     const players = playersSnap.docs.map((doc) => doc.data() as PlayerService);
-
-    console.log("find:", { players });
 
     if (board !== undefined) {
       return { ...match, board, players };
@@ -312,7 +308,6 @@ export const match: MatchPlugin = {
           } = doc.data() as PlayerService;
           const playerIndex = this.getPlayerIndex(data.uid);
           if (playerIndex !== -1) {
-            console.log("_subscribeRemote > opponent state", data.state);
             this.service?.players[playerIndex].sync(data);
           } else {
             const { uid, displayName, photoURL, options } = data;
@@ -354,7 +349,6 @@ export const match: MatchPlugin = {
             if (dbRef.board.collection) {
               const batch = writeBatch(db);
               for (const [name, value] of Object.entries(data)) {
-                console.log("[send]", name, value);
                 batch.update(doc(dbRef.board.collection, name), { value });
               }
               batch.commit();

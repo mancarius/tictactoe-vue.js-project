@@ -27,7 +27,6 @@ const mutations: MutationTree<State["match"]> = {
   [Mutations.MATCH_EXIT](state) {
     for (const [key, value] of Object.entries(initialMatchState)) {
       state[key] = value;
-      console.log({ [key]: value });
     }
   },
 };

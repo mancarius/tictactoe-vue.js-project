@@ -108,12 +108,6 @@ export default class MatchService {
     if (nextState && nextState !== this.state) {
       this.state = nextState;
 
-      console.log("_stateHandler", {
-        matchState: this.state,
-        p1State,
-        p2State,
-      });
-
       switch (nextState) {
         case MatchStates.checking_sequence: {
           this._lastUpdatedCells = this.board.lastUpdatedCells;
@@ -181,7 +175,6 @@ export default class MatchService {
           ? this._onSequenceFound(result)
           : await this._onSequenceNotFound();
       } catch (error: any) {
-        console.log(error);
         throw new Error(error);
       }
     } else {
@@ -289,12 +282,6 @@ export default class MatchService {
     this.state = MatchStates.checking_game_status;
 
     const existsEmptyCells = this.board.emptyCells.length > 0;
-
-    console.log(
-      "_checkGameStatus - existsEmptyCells:",
-      existsEmptyCells,
-      'emptyCells.length', this.board.emptyCells.length
-    );
 
     if (existsEmptyCells) {
       this.state = MatchStates.waiting_for_player_move;
@@ -567,8 +554,6 @@ export default class MatchService {
       this.players[0].lastMoveTimestamp,
       this.players[1].lastMoveTimestamp,
     ];
-
-    console.log("MatchService - nextPlayerToMove", timestamp);
 
     if (timestamp[0] === 0 && timestamp[1] === 0) return null;
 

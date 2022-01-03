@@ -87,7 +87,7 @@ export default defineComponent({
         message: 'What you want to do now?',
         ok: {
           label: "Play again",
-          color: "primary",
+          color: "accent",
         },
         cancel: {
           label: "Exit",
