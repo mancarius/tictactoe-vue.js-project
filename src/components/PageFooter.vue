@@ -7,7 +7,6 @@
     
 <script lang="ts">
 import { defineComponent } from 'vue'
-import TitleVue from './Title.vue'
 
 export default defineComponent({
   name: "PageFooter",
