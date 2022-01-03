@@ -18,6 +18,9 @@ import MyButton from './MyButton.vue'
 import { Actions } from '@/helpers/enums/actions.enum'
 import { State } from 'vuex/core';
 import Card from './Card.vue';
+import { getAuth, setPersistence, browserLocalPersistence, browserSessionPersistence, FacebookAuthProvider, GoogleAuthProvider, signInWithPopup } from '@firebase/auth';
+import { Mutations } from '@/helpers/enums/mutations.enum';
+import UserService from '@/services/user.service';
 
 export default defineComponent({
   name:"UserAuth",
@@ -34,11 +37,45 @@ export default defineComponent({
           }
       });
     
-    const login = (provider: Provider) => {
+    const login = async (providerType: Provider) => {
       waitingForExternalAuth = true;
-      store.dispatch(Actions.USER_LOG_IN, provider).finally(() => {
-        waitingForExternalAuth = false;
-      });
+      const auth = getAuth();
+      let provider;
+
+      const storageType: "localStorage" | "sessionStorage" = process.env.VUE_APP_AUTH_STORAGE;
+      
+      await setPersistence(
+        auth,
+        storageType === "localStorage"
+          ? browserLocalPersistence
+          : browserSessionPersistence
+      );
+
+      switch (providerType) {
+        case Provider.facebook:
+          provider = new FacebookAuthProvider();
+          break;
+        case Provider.google:
+          provider = new GoogleAuthProvider();
+          break;
+        default:
+      }
+
+      if (provider !== undefined) {
+        await signInWithPopup(auth, provider)
+          .then(() => {
+            store.commit(Mutations.USER_REQUIRE_AUTH, false)
+          })
+          .catch((error) => {
+            alert(error.message);
+            throw error;
+          })
+          .finally(() => {
+            waitingForExternalAuth = false;
+          });
+      } else {
+        throw new Error("No provider");
+      }
     };
 
     const wasHided = (e: Event) => {

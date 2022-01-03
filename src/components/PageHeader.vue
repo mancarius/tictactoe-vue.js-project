@@ -36,9 +36,10 @@ import AvatarVue from '@/components/Avatar.vue';
 import store from '@/store';
 import { Getters } from '@/helpers/enums/getters.enum';
 import User from '@/types/user.interface';
-import { Actions } from '@/helpers/enums/actions.enum';
 import { useRoute } from 'vue-router';
 import { Routes } from '@/helpers/enums/routes.enum';
+import { getAuth, signOut } from '@firebase/auth';
+
 
 export default defineComponent({
   name: "PageHeader",
@@ -65,7 +66,12 @@ export default defineComponent({
 
   methods: {
     async logout() {
-      store.dispatch(Actions.USER_LOG_OUT).then(() => this.$router.push({name: "Home",  params:{isRedirect: 1}}))
+      const auth = getAuth();
+
+    await signOut(auth)
+      .catch((error) => {
+        throw error;
+      });
     }
   },
 

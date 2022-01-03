@@ -33,10 +33,13 @@
 
 
 <script lang="ts">
+import db from '@/helpers/db';
 import { Getters } from '@/helpers/enums/getters.enum';
-import UserService from '@/services/user.service';
+import { Mutations } from '@/helpers/enums/mutations.enum';
+import User from '@/types/user.interface';
+import { collection, doc, setDoc } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
-import { defineComponent, onMounted, Ref, ref, watch } from 'vue'
+import { defineComponent, Ref, ref, watch } from 'vue'
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
@@ -47,26 +50,32 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
     const { notify } = useQuasar();
-    const userId = store.getters[Getters.USER_DATA].uid;
+    const user = store.getters[Getters.USER_DATA];
     let customName: Ref<string | null> = ref(null);
+    const { settings } = store.getters[Getters.USER_DATA];
+    if(settings?.customName){
+      customName.value = settings.customName as string;
+    }
 
     watch(customName, (next, prev) => {
       if( next ) {
-        UserService.saveSettings(userId, {'customName': next}).catch(error => {
-          console.error(error);
-          notify("Failed to save the custom name.")
-          customName.value = prev;
-        });
+        saveUserSettings(user.uid, {'customName': next})
+          .then(() => {
+            store.commit(Mutations.USER_SET, {...user, settings: next})
+          })
+          .catch(error => {
+            console.error(error);
+            notify("Failed to save the custom name.")
+            customName.value = prev;
+          });
       }
     });
 
-    onMounted( () => {
-      UserService.getSettings(userId).then(settings => {
-        if(settings?.customName){
-          customName.value = settings.customName as string;
-        }
-      });
-    });
+    async function saveUserSettings(uid: User['uid'], settings: User['settings']) {
+      const collectionRef = collection(db, "users_settings");
+      const docRef = doc(collectionRef, uid);
+      return await setDoc(docRef, settings);
+    }
 
     return {
       customName,

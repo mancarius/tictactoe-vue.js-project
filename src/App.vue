@@ -21,14 +21,38 @@ import PageLoading from './components/PageLoading.vue'
 import UserAuth from './components/UserAuth.vue'
 import { Actions } from './helpers/enums/actions.enum'
 import store from './store'
+import { getAuth } from "firebase/auth";
+import { useStore } from 'vuex'
+import { Mutations } from './helpers/enums/mutations.enum'
+import User from './types/user.interface'
+import db from './helpers/db'
+import { collection, doc, getDoc } from '@firebase/firestore'
+import { useRouter } from 'vue-router'
 
 export default defineComponent({
   components: { PageHeader, PageLoading, UserAuth },
   name: 'App',
 
-  data () {
-    return {
-      //
+  setup() {
+    const auth = getAuth();
+    const store = useStore();
+    const router = useRouter();
+
+    auth.onAuthStateChanged(async user => {
+      if(user) {
+        const settings = await getUserSettings(user.uid);
+        store.commit(Mutations.USER_SET, { ...user, settings });
+      } else {
+        store.commit(Mutations.USER_SET, null);
+        router.push({name: "Home",  params:{isRedirect: 1}})
+      }
+    });
+
+    async function getUserSettings(uid: User['uid']) {
+      const collectionRef = collection(db, "users_settings");
+      const docRef = doc(collectionRef, uid);
+      const docSnap = await getDoc(docRef);
+      return docSnap.exists() ? (docSnap.data() as User["settings"]) : {};
     }
   },
 
