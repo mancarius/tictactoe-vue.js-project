@@ -5,9 +5,7 @@
       <component :is="Component"></component>
     </router-view>
   </main>
-  <footer>
-    <p>Mattia Mancarella</p>
-  </footer>
+  <page-footer></page-footer>
   <!-- Loader spinner -->
   <page-loading />
   <!-- User Auth -->
@@ -28,9 +26,10 @@ import User from './types/user.interface'
 import db from './helpers/db'
 import { collection, doc, getDoc } from '@firebase/firestore'
 import { useRouter } from 'vue-router'
+import PageFooter from './components/PageFooter.vue'
 
 export default defineComponent({
-  components: { PageHeader, PageLoading, UserAuth },
+  components: { PageHeader, PageLoading, UserAuth, PageFooter },
   name: 'App',
 
   setup() {

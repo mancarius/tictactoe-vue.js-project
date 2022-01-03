@@ -24,7 +24,14 @@ export default defineComponent({
 <style lang="scss" scoped>
   footer {
     display: flex;
+    flex-flow: column;
     justify-content: center;
+    align-items: center;
     text-align: center;
+    background-color: #fafafa;
+    margin: -1rem;
+    margin-top: 2rem;
+    padding: 1rem;
+    padding-bottom: 0;
   }
 </style>
