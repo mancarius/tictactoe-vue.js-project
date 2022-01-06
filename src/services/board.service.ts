@@ -3,11 +3,7 @@ import removeObservables from "@/helpers/removeObservables";
 import * as Board from "@/types/board-types.interface";
 import Player from "@/types/player.interface";
 import _ from "lodash";
-import {
-  Observer,
-  ReplaySubject,
-  Subscription,
-} from "rxjs";
+import { Observer, ReplaySubject, Subscription } from "rxjs";
 
 export default class BoardService {
   private _changes$: ReplaySubject<Partial<BoardService>> = new ReplaySubject(
@@ -323,12 +319,7 @@ export default class BoardService {
    * @memberof BoardService
    */
   public static getEmptyCells(cells: Board.cell[]): Board.cell[] {
-    const emptyCells: Board.cell[] = [];
-    for (let i = 0; i < cells.length; i++) {
-      if (cells[i].player === null) emptyCells.push(cells[i]);
-    }
-
-    return emptyCells;
+    return BoardService.getPlayerCells(null, cells);
   }
 
   /**
@@ -339,9 +330,25 @@ export default class BoardService {
    * @memberof BoardService
    */
   public getPlayerCells(uid: Player["uid"]): Board.cell[] {
+    return BoardService.getPlayerCells(uid, this.cells);
+  }
+
+  /**
+   *
+   *
+   * @static
+   * @param {Player["uid"]} uid
+   * @param {Board.cell[]} cells
+   * @return {*}  {Board.cell[]}
+   * @memberof BoardService
+   */
+  public static getPlayerCells(
+    uid: Player["uid"] | null,
+    cells: Board.cell[]
+  ): Board.cell[] {
     const playerCells: Board.cell[] = [];
-    for (let i = 0; i < this.cells.length; i++) {
-      if (this.cells[i].player === uid) playerCells.push(this.cells[i]);
+    for (let i = 0; i < cells.length; i++) {
+      if (cells[i].player === uid) playerCells.push(cells[i]);
     }
 
     return playerCells;
