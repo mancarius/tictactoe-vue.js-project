@@ -20,7 +20,7 @@ export interface Symbol_ {
 export default interface SymbolsPlugin {
   options: SymbolOptions;
 
-  _collectionRef: CollectionReference<DocumentData>;
+  _collectionRef: CollectionReference<DocumentData> | null;
 
   _collection: Symbol_[];
 

@@ -11,9 +11,18 @@ const firebaseConfig = {
   measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENT_ID,
 };
 
+let isValid = true;
+
+for (const [key, value] of Object.entries(firebaseConfig)) {
+  if (value.trim().length === 0) {
+    isValid = false;
+    break;
+  }
+}
+
 // Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig);
-const firebaseAnalytics = getAnalytics(firebaseApp);
+const firebaseApp = isValid ? initializeApp(firebaseConfig) : undefined;
+const firebaseAnalytics = isValid ? getAnalytics(firebaseApp) : undefined;
 
 export {
     firebaseApp,

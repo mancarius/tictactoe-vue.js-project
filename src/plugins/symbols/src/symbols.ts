@@ -1,11 +1,10 @@
 import db from "@/helpers/db";
 import { collection, doc, getDoc, getDocs, query } from "@firebase/firestore";
-import SymbolsPlugin, {
-  Symbol_,
-} from "../types/symbols-plugin.interface";
+import SymbolsPlugin, { Symbol_ } from "../types/symbols-plugin.interface";
+import { symbolsDB } from "./symbolsDB";
 
 export const symbols: SymbolsPlugin = {
-  _collectionRef: collection(db, "symbols"),
+  _collectionRef: db ? collection(db, "symbols") : null,
 
   options: {
     localPath: "assets/symbols/",
@@ -14,13 +13,17 @@ export const symbols: SymbolsPlugin = {
   _collection: [],
 
   async all() {
-    const q = query(this._collectionRef);
+    if (this._collectionRef) {
+      const q = query(this._collectionRef);
 
-    const querySnapshot = await getDocs(q);
+      const querySnapshot = await getDocs(q);
 
-    return querySnapshot.docs.map((doc) => {
-      return { code: doc.id, ...doc.data() } as Symbol_;
-    });
+      return querySnapshot.docs.map((doc) => {
+        return { code: doc.id, ...doc.data() } as Symbol_;
+      });
+    } else {
+      return symbolsDB;
+    }
   },
 
   async getFilename(code: string) {
@@ -31,10 +34,14 @@ export const symbols: SymbolsPlugin = {
 
       return symbol?.filename ?? null;
     } else {
-      const docRef = doc(db, "symbols", code);
-      const docSnap = await getDoc(docRef);
+      if (db) {
+        const docRef = doc(db, "symbols", code);
+        const docSnap = await getDoc(docRef);
 
-      return docSnap.exists() ? docSnap.data().filename : null;
+        return docSnap.exists() ? docSnap.data().filename : null;
+      } else {
+        return symbolsDB.filter((symbol) => symbol.code === code);
+      }
     }
   },
 
