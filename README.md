@@ -198,6 +198,7 @@ Project Link: [https://github.com/mancarius/tictactoe-vue.js-project](https://gi
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 * [Rxjs](https://rxjs.dev)
+* [Firebase](https://firebase.google.com/)
 
 
 
