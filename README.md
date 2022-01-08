@@ -31,13 +31,10 @@
     <img src="images/logo.png" alt="Logo"  height="80">
   </a>
 
-  <h3 align="center">Best-README-Template</h3>
+  <h3 align="center">Tic Tac Toe</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
-    <br />
-    <a href="https://github.com/mancarius/tictactoe-vue.js-project"><strong>Explore the docs »</strong></a>
-    <br />
+    A new way to play to the famous game!
     <br />
     <a href="https://www.mattiamancarella.com/works/vue/tic-tac-toe">View Demo</a>
     ·
@@ -46,7 +43,8 @@
     <a href="https://github.com/mancarius/tictactoe-vue.js-project/issues">Request Feature</a>
   </p>
 </p>
-
+<br />
+<br />
 
 
 <!-- TABLE OF CONTENTS -->
