@@ -69,7 +69,7 @@ export default defineComponent({
     onBeforeRouteLeave((to, from, next) => {
       
       // if press history back button, redirect to Home to trigger confirmation pop-up located Match view
-      if(to.name !== Routes.home) {
+      if(to.name === Routes.builder) {
         next(false);
         router.push({name: Routes.home});
       } else {
