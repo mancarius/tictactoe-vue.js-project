@@ -18,9 +18,9 @@ import MyButton from './MyButton.vue'
 import { Actions } from '@/helpers/enums/actions.enum'
 import { State } from 'vuex/core';
 import Card from './Card.vue';
-import { getAuth, setPersistence, browserLocalPersistence, browserSessionPersistence, FacebookAuthProvider, GoogleAuthProvider, signInWithPopup } from '@firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence, browserSessionPersistence, FacebookAuthProvider, GoogleAuthProvider, signInWithPopup, Auth } from '@firebase/auth';
 import { Mutations } from '@/helpers/enums/mutations.enum';
-import UserService from '@/services/user.service';
+import { useQuasar } from 'quasar';
 
 export default defineComponent({
   name:"UserAuth",
@@ -28,6 +28,7 @@ export default defineComponent({
   setup() {
     const store: Store<State> = useStore();
     const providers = Provider;
+    const { notify } = useQuasar();
     let waitingForExternalAuth = false;
 
     const showModal = computed({
@@ -39,11 +40,20 @@ export default defineComponent({
     
     const login = async (providerType: Provider) => {
       waitingForExternalAuth = true;
-      const auth = getAuth();
+      let auth: Auth | null = null;
       let provider;
 
       const storageType: "localStorage" | "sessionStorage" = process.env.VUE_APP_AUTH_STORAGE;
       
+      try {
+        auth = getAuth();
+      }
+      catch (error) {
+        notify({type: 'warning', message: "This function is not available"});
+        store.commit(Mutations.USER_REQUIRE_AUTH, false);
+        return;
+      }
+
       await setPersistence(
         auth,
         storageType === "localStorage"
@@ -63,18 +73,18 @@ export default defineComponent({
 
       if (provider !== undefined) {
         await signInWithPopup(auth, provider)
-          .then(() => {
-            store.commit(Mutations.USER_REQUIRE_AUTH, false)
-          })
           .catch((error) => {
             alert(error.message);
-            throw error;
+            console.error(error);
+            notify({type: 'negative', message: "An error occured. Unable to complete sign-in"});
           })
           .finally(() => {
             waitingForExternalAuth = false;
+            store.commit(Mutations.USER_REQUIRE_AUTH, false)
           });
       } else {
-        throw new Error("No provider");
+        console.warn("No provider");
+        notify({type: 'warning', message: "No provider"});
       }
     };
 

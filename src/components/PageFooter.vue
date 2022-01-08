@@ -30,7 +30,6 @@ export default defineComponent({
     text-align: center;
     background-color: #fafafa;
     margin: -1rem;
-    margin-top: 2rem;
     padding: 1rem;
     padding-bottom: 0;
   }

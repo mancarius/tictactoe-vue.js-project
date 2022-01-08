@@ -1,6 +1,7 @@
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import { FirebaseApp, initializeApp } from "firebase/app";
+import { Analytics, getAnalytics } from "firebase/analytics";
 
+let firebaseApp: FirebaseApp | null, firebaseAnalytics: Analytics;
 const firebaseConfig = {
   apiKey: process.env.VUE_APP_FIREBASE_APY_KEY,
   authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
@@ -11,20 +12,13 @@ const firebaseConfig = {
   measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENT_ID,
 };
 
-let isValid = true;
-
-for (const [key, value] of Object.entries(firebaseConfig)) {
-  if (value.trim().length === 0) {
-    isValid = false;
-    break;
-  }
+// Initialize Firebase
+try {
+  firebaseApp = initializeApp(firebaseConfig);
+  firebaseAnalytics = getAnalytics(firebaseApp);
+} catch (error) {
+  console.log(error);
+  firebaseApp = null;
 }
 
-// Initialize Firebase
-const firebaseApp = isValid ? initializeApp(firebaseConfig) : undefined;
-const firebaseAnalytics = isValid ? getAnalytics(firebaseApp) : undefined;
-
-export {
-    firebaseApp,
-    firebaseAnalytics
-};
+export { firebaseApp, firebaseAnalytics };

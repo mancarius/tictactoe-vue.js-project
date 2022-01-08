@@ -41,7 +41,7 @@ export default defineComponent({
         box-shadow: 0px 1px 1px 0px #00000040;
         overflow: hidden;
         position: relative;
-        padding: 2rem;
+        padding: 1.5rem;
         display: flex;
         flex-direction: column;
         gap: 2rem;

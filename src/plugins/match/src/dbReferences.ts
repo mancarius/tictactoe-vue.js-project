@@ -36,6 +36,11 @@ export const dbRef: dbReferences = {
  */
 export const setDbReferences = (matchId: MatchService["id"]): Unsubscribe => {
   BASE_PATH = "matches/" + matchId;
+
+  if (!db) {
+    throw new Error("Remote server is not configured");
+  }
+
   dbRef.match = doc(db, "matches", matchId);
   dbRef.board.collection = collection(db, BASE_PATH, "board");
   dbRef.players.collection = collection(db, BASE_PATH, "players");
@@ -74,6 +79,10 @@ export const createDocumentRef = (
 
   if (typeof docName !== "string" || docName.trim().length === 0) {
     throw new TypeError("Invalid document name");
+  }
+
+  if (!db) {
+    throw new Error("Remote server is not configured");
   }
 
   return doc(db, BASE_PATH, collectionName, docName);

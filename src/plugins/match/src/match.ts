@@ -68,6 +68,10 @@ export const match: MatchPlugin = {
     this.service.getPlayer(user.uid).options.isOwner = true;
 
     if (this.service.type === MatchTypes.PLAYER_VS_PLAYER) {
+      if (!db) {
+        throw new Error("Remote server is not configured");
+      }
+
       const afs_subscriptions = setDbReferences(this.service.id);
       this.subscriptions.push(afs_subscriptions);
 
@@ -128,6 +132,10 @@ export const match: MatchPlugin = {
       throw new Error("Received an empty string");
     }
 
+    if (!db) {
+      throw new Error("Remote server is not configured");
+    }
+
     const matchRef = doc(db, "matches", id);
     const matchSnap = await getDoc(matchRef);
     const match = matchSnap.data() as Partial<MatchService>;
@@ -185,17 +193,21 @@ export const match: MatchPlugin = {
       const path = "matches/" + matchId + "/players";
       const name = "player_" + user.uid;
 
-      const docRef = doc(db, path, name);
+      if (db) {
+        const docRef = doc(db, path, name);
 
-      await setDoc(docRef, player);
+        await setDoc(docRef, player);
 
-      const subs = setDbReferences(this.service.id);
-      this.subscriptions.push(subs);
+        const subs = setDbReferences(this.service.id);
+        this.subscriptions.push(subs);
 
-      this._subscribeRemote();
-      this._subscribeLocal().match();
-      this._subscribeLocal().board();
-      this._subscribeLocal().player(user.uid);
+        this._subscribeRemote();
+        this._subscribeLocal().match();
+        this._subscribeLocal().board();
+        this._subscribeLocal().player(user.uid);
+      } else {
+        throw new Error("Remote server is not configured");
+      }
 
       return;
     } catch (error: any) {
@@ -347,11 +359,15 @@ export const match: MatchPlugin = {
             if (data === undefined) return;
 
             if (dbRef.board.collection) {
-              const batch = writeBatch(db);
-              for (const [name, value] of Object.entries(data)) {
-                batch.update(doc(dbRef.board.collection, name), { value });
+              if (db) {
+                const batch = writeBatch(db);
+                for (const [name, value] of Object.entries(data)) {
+                  batch.update(doc(dbRef.board.collection, name), { value });
+                }
+                batch.commit();
+              } else {
+                console.warn("Remote server is not configured");
               }
-              batch.commit();
             } else {
               console.warn("Invalid board collection");
             }

@@ -90,6 +90,8 @@ export default defineComponent({
         gap: 1rem;
         position:sticky;
         top:0;
+        z-index: 100;
+        background-color: #ffffff;
 
         & > div {
             display: flex;

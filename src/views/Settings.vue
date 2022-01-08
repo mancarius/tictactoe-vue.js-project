@@ -74,9 +74,13 @@ export default defineComponent({
     });
 
     async function saveUserSettings(uid: User['uid'], settings: User['settings']) {
-      const collectionRef = collection(db, "users_settings");
-      const docRef = doc(collectionRef, uid);
-      return await setDoc(docRef, settings);
+      if(db) {
+        const collectionRef = collection(db, "users_settings");
+        const docRef = doc(collectionRef, uid);
+        return await setDoc(docRef, settings);
+      } else {
+        throw new Error("Remote server is not configured");
+      }
     }
 
     return {

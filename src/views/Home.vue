@@ -45,7 +45,6 @@ export default defineComponent({
   flex-direction: column;
   gap: 1rem;
   margin: 0 auto;
-  margin-top: 2rem;
   max-width: 21rem;
   width: 100%;
 

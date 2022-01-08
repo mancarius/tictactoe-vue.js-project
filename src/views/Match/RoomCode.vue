@@ -38,12 +38,9 @@ import _ from 'lodash';
 import { useMatch } from '@/plugins/match';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
 import { MatchTypes } from '@/helpers/enums/match-types.enum';
-import { useStore } from 'vuex';
 import { Actions } from '@/helpers/enums/actions.enum';
-import { useQuasar } from 'quasar';
-import MatchService from '@/services/match/match.service';
-import { useSetStates } from '@/injectables/setStates';
-import { useRoute, useRouter } from 'vue-router';
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
+import { Routes } from '@/helpers/enums/routes.enum';
 
 
 declare module "@vue/runtime-core" {
@@ -68,6 +65,17 @@ export default defineComponent({
     if(match.service) {
       match.service.state = MatchStates.building;
     }
+
+    onBeforeRouteLeave((to, from, next) => {
+      
+      // if press history back button, redirect to Home to trigger confirmation pop-up located Match view
+      if(to.name !== Routes.home) {
+        next(false);
+        router.push({name: Routes.home});
+      } else {
+        next(true);
+      }
+    });
 
     watchEffect(() => {
         if(match.opponent instanceof PlayerService) {
@@ -122,7 +130,6 @@ export default defineComponent({
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-bottom: 2rem;
 
   .opponent-connection-state-container {
     position: relative;

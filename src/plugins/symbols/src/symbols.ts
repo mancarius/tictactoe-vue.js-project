@@ -4,7 +4,7 @@ import SymbolsPlugin, { Symbol_ } from "../types/symbols-plugin.interface";
 import { symbolsDB } from "./symbolsDB";
 
 export const symbols: SymbolsPlugin = {
-  _collectionRef: db ? collection(db, "symbols") : null,
+  _collectionRef: db?.type ? collection(db, "symbols") : null,
 
   options: {
     localPath: "assets/symbols/",
@@ -13,6 +13,7 @@ export const symbols: SymbolsPlugin = {
   _collection: [],
 
   async all() {
+    console.log("symbols - all:", db);
     if (this._collectionRef) {
       const q = query(this._collectionRef);
 
