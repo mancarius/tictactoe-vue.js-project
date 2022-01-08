@@ -13,7 +13,6 @@ export const symbols: SymbolsPlugin = {
   _collection: [],
 
   async all() {
-    console.log("symbols - all:", db);
     if (this._collectionRef) {
       const q = query(this._collectionRef);
 
