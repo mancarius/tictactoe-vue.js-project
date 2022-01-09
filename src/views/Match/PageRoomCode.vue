@@ -9,7 +9,7 @@
           leave-active-class="animated fadeOut"
         >
           <div v-if="opponent" class="opponent-connected-box">
-            <avatar src="{{opponent.photoURL}}" shadow />
+            <base-avatar src="{{opponent.photoURL}}" shadow />
             <p>
               {{opponent.displayName}} is connected!
             </p>
@@ -26,7 +26,6 @@
 
 
 <script lang="ts">
-import Avatar from '@/components/Avatar.vue';
 import RoomCodeGenerator from '@/components/RoomCodeGenerator.vue';
 import { Getters } from '@/helpers/enums/getters.enum';
 import PlayerService from '@/services/player.service';
@@ -41,6 +40,7 @@ import { MatchTypes } from '@/helpers/enums/match-types.enum';
 import { Actions } from '@/helpers/enums/actions.enum';
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import { Routes } from '@/helpers/enums/routes.enum';
+import BaseAvatar from '@/components/BaseAvatar.vue';
 
 
 declare module "@vue/runtime-core" {
@@ -50,9 +50,9 @@ declare module "@vue/runtime-core" {
 }
 
 export default defineComponent({
-  name:"RoomCode",
+  name:"PageRoomCode",
 
-  components: { Avatar, RoomCodeGenerator },
+  components: { RoomCodeGenerator, BaseAvatar },
 
   setup() {
     const match = useMatch();

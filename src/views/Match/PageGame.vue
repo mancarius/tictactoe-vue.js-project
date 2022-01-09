@@ -1,11 +1,11 @@
 <template>
 <div class="container">
-  <status-bar/>
+  <game-players-bar/>
   <game-status-display/>
   <score-board/>
   <game-board />
   <div class="actions">
-    <shuffle-button v-if="useShuffling"/>
+    <game-shuffle-button v-if="useShuffling"/>
   </div>
 </div>
 </template>
@@ -17,8 +17,8 @@
 import GameBoard from '@/components/match/GameBoard.vue';
 import GameStatusDisplay from '@/components/match/GameStatusDisplay.vue';
 import ScoreBoard from '@/components/match/ScoreBoard.vue';
-import ShuffleButton from '@/components/match/shuffleButton.vue';
-import StatusBar from '@/components/match/StatusBar.vue';
+import GameShuffleButton from '@/components/match/GameShuffleButton.vue';
+import GamePlayersBar from '@/components/match/GamePlayersBar.vue';
 import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
@@ -27,14 +27,14 @@ import { useSetStates } from '@/injectables/setStates';
 import { useMatch } from '@/plugins/match';
 import _ from 'lodash';
 import { useQuasar } from 'quasar';
-import { computed, defineComponent, onBeforeUnmount, onMounted, watch } from 'vue';
+import { computed, defineComponent, onMounted, watch } from 'vue';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
 export default defineComponent({
-  name: "Game",
+  name: "PageGame",
 
-  components: {StatusBar, ScoreBoard, GameBoard, ShuffleButton, GameStatusDisplay},
+  components: {GamePlayersBar, ScoreBoard, GameBoard, GameShuffleButton, GameStatusDisplay},
 
   setup() {
     const match = useMatch();

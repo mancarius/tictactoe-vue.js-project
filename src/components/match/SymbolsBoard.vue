@@ -4,7 +4,7 @@
     <li v-for="item in itemList" :key="item.code" class="item" :class="{selected: selectedSymbol === item.code, disabled: disableSymbol === item.code}">
       <label :for="'item_'+item.code">
         <input type="radio" name="symbol" :id="'item_'+item.code" v-model="selection" :value="item.code" />
-        <symbol-vue class="image" :code="item.code" />
+        <base-symbol class="image" :code="item.code" />
       </label>
     </li>
   </ul>
@@ -15,12 +15,12 @@
 import { useSymbols } from '@/plugins/symbols'
 import { defineComponent, ref, watch } from 'vue'
 import { Symbol_ as SymbolType } from '@/plugins/symbols/types/symbols-plugin.interface';
-import SymbolVue from './Symbol.vue';
+import BaseSymbol from '../BaseSymbol.vue';
 
 export default defineComponent({
   name: "SymbolsBoard",
 
-  components: { SymbolVue },
+  components: { BaseSymbol },
 
   props: {
     disabled: Boolean,

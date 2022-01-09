@@ -11,10 +11,13 @@ import { defineComponent, ref, watch } from 'vue'
 import { useStore } from 'vuex';
 
 export default defineComponent({
-  name: "Score",
+  name: "ScoreItem",
 
   props: {
-    uid: String
+    uid: {
+        type: String,
+        required: true
+    },
   },
 
   setup(props) {

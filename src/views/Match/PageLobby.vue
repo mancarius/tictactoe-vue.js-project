@@ -11,8 +11,8 @@
     </template>
   </Suspense>
   <div class="actions">
-    <my-button v-if="!ready" outline color="negative" @click="leaveRoom">Exit</my-button>
-    <my-button :loading="ready" push color="accent" :disabled="!playerSymbol" @click="ready = !ready">
+    <base-button v-if="!ready" outline color="negative" @click="leaveRoom">Exit</base-button>
+    <base-button :loading="ready" push color="accent" :disabled="!playerSymbol" @click="ready = !ready">
       Ready
       <template v-slot:loading>
         <div class="nowrap-content">
@@ -20,15 +20,15 @@
           Waiting for opponent...
         </div>
       </template>
-    </my-button>
+    </base-button>
   </div>
 </div>
 </template>
 
 <script lang="ts">
-import StatusBar from '@/components/match/StatusBar.vue';
+import StatusBar from '@/components/match/GamePlayersBar.vue';
 import SymbolsBoard from '@/components/match/SymbolsBoard.vue';
-import MyButton from '@/components/MyButton.vue';
+import BaseButton from '@/components/BaseButton.vue';
 import { Actions } from '@/helpers/enums/actions.enum';
 import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
@@ -43,9 +43,9 @@ import { useRoute, useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
 export default defineComponent({
-    name: "Lobby",
+    name: "PageLobby",
 
-    components: { StatusBar, SymbolsBoard, MyButton },
+    components: { StatusBar, SymbolsBoard, BaseButton },
 
     setup() {
       const match = useMatch();

@@ -13,7 +13,7 @@
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-    name:"Cart",
+    name:"BaseCard",
     props: {
         centerTitle: Boolean,
         primary: Boolean,

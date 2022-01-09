@@ -6,13 +6,13 @@ import { Routes } from "@/helpers/enums/routes.enum";
 import store from "@/store";
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import { MutationPayload } from "vuex";
-import Home from "../views/Home.vue";
+import PageHome from "../views/PageHome.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: Routes.home,
-    component: Home,
+    component: PageHome,
     meta: {
       requiresAuth: false,
     },
@@ -21,7 +21,7 @@ const routes: Array<RouteRecordRaw> = [
     path: "/account/settings",
     name: Routes.accountSettings,
     component: () =>
-      import(/* webpackChunkName: "match" */ "../views/Settings.vue"),
+      import(/* webpackChunkName: "match" */ "../views/PageSettings.vue"),
     meta: {
       requiresAuth: true,
     },
@@ -29,7 +29,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/:matchType",
     component: () =>
-      import(/* webpackChunkName: "match" */ "../views/Match/index.vue"),
+      import(/* webpackChunkName: "match" */ "../views/Match/PageMatch.vue"),
     props: true,
     meta: {
       requiresAuth: true,
@@ -39,25 +39,25 @@ const routes: Array<RouteRecordRaw> = [
         path: "builder",
         name: Routes.builder,
         component: () =>
-          import(/* webpackChunkName: "match" */ "../views/Match/Builder.vue"),
+          import(/* webpackChunkName: "match" */ "../views/Match/PageBuilder.vue"),
       },
       {
         path: "room-code",
         name: Routes.roomCode,
         component: () =>
-          import(/* webpackChunkName: "match" */ "../views/Match/RoomCode.vue"),
+          import(/* webpackChunkName: "match" */ "../views/Match/PageRoomCode.vue"),
       },
       {
         path: ":matchId/lobby",
         name: Routes.lobby,
         component: () =>
-          import(/* webpackChunkName: "match" */ "../views/Match/Lobby.vue"),
+          import(/* webpackChunkName: "match" */ "../views/Match/PageLobby.vue"),
       },
       {
         path: ":matchId/game",
         name: Routes.game,
         component: () =>
-          import(/* webpackChunkName: "match" */ "../views/Match/Game.vue"),
+          import(/* webpackChunkName: "match" */ "../views/Match/PageGame.vue"),
       },
     ],
   },

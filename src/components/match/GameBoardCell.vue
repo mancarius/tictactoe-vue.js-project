@@ -1,6 +1,6 @@
 <template>
   <div @click="cellClick" class="cell" :class="classes">
-    <symbol-vue v-if="symbolCode" :code="symbolCode" class="symbol" />
+    <base-symbol v-if="symbolCode" :code="symbolCode" class="symbol" />
   </div>
 </template>
 
@@ -15,15 +15,18 @@ import { WinningSequence } from '@/types/board-types.interface';
 import _ from 'lodash';
 import { computed, defineComponent, reactive, Ref, ref, watch } from 'vue'
 import { useStore } from 'vuex';
-import SymbolVue from './Symbol.vue';
+import BaseSymbol from '../BaseSymbol.vue';
 
 export default defineComponent({
-  name: "Cell",
+  name: "GameBoardCell",
 
-  components: { SymbolVue },
+  components: { BaseSymbol },
 
   props: {
-    cellIndex: Number
+    cellIndex: {
+        type: Number,
+        required: true
+    },
   },
 
   setup(props) {

@@ -1,20 +1,20 @@
 <template>
   <div class="score-board">
-    <score :uid="opponentUID" class="score-box left" />
+    <score-item :uid="opponentUID" class="score-box left" />
     <h6 class="label">score</h6>
-    <score :uid="playerUID" class="score-box right" />
+    <score-item :uid="playerUID" class="score-box right" />
   </div>
 </template>
 
 <script lang="ts">
 import { useMatch } from '@/plugins/match'
 import { defineComponent } from 'vue'
-import Score from './Score.vue';
+import ScoreItem from './ScoreItem.vue';
 
 export default defineComponent({
   name: "ScoreBoard",
 
-  components: { Score },
+  components: { ScoreItem },
 
   setup() {
     const match = useMatch();

@@ -22,7 +22,7 @@ import { State } from 'vuex/core';
 export default defineComponent({
   components: { },
 
-  name:"MatchHome",
+  name:"PageMatch",
 
   beforeRouteEnter (to, from, next) {
     if(from.name === undefined)
