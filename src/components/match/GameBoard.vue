@@ -1,7 +1,7 @@
 <template>
   <div class="board-container">
     <div class="board" :class="classes">
-      <cell v-for="(cell, index) in cells" :key="cell.coords.x+'.'+cell.coords.y" :cellIndex="index"/>
+      <game-board-cell v-for="(cell, index) in cells" :key="cell.coords.x+'.'+cell.coords.y" :cellIndex="index"/>
     </div>
 
     <q-inner-loading
@@ -27,12 +27,12 @@ import _ from 'lodash';
 import { useQuasar } from 'quasar';
 import { computed, defineComponent, reactive, ref, watch } from 'vue'
 import { useStore } from 'vuex';
-import cell from './cell.vue'
+import GameBoardCell from './GameBoardCell.vue'
 
 export default defineComponent({
   name:"GameBoard",
 
-  components: { cell },
+  components: { GameBoardCell },
 
   setup() {
     const { notify } = useQuasar();

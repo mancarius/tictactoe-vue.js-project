@@ -7,11 +7,14 @@ import { useSymbols } from '@/plugins/symbols'
 import { defineComponent, onMounted, Ref, ref, watch } from 'vue'
 
 export default defineComponent({
-  name: "Symbol",
+  name: "BaseSymbol",
 
   props: {
     bordered: Boolean,
-    code: String
+    code: {
+        type: String,
+        required: true
+    }
   },
 
   setup(props) {

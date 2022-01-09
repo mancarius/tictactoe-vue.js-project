@@ -2,11 +2,11 @@
     <header v-if="visible">
         <div></div>
         <div class="title-container">
-            <title-vue/>
+            <base-app-title/>
         </div>
         <div>
           <q-btn v-if="isUserAuthed" class="browser-default" round>
-            <avatar-vue :src="user.photoURL" class="dontApplyDark" />
+            <base-avatar :src="user.photoURL" class="dontApplyDark" />
             <q-menu :offset="[0, 10]">
               <q-list separator>
                 <q-item clickable v-ripple v-close-popup to="/account/settings" exact>
@@ -31,20 +31,20 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch } from 'vue';
-import TitleVue from '@/components/Title.vue';
-import AvatarVue from '@/components/Avatar.vue';
+import BaseAppTitle from '@/components/BaseAppTitle.vue';
 import store from '@/store';
 import { Getters } from '@/helpers/enums/getters.enum';
 import User from '@/types/user.interface';
 import { useRoute } from 'vue-router';
 import { Routes } from '@/helpers/enums/routes.enum';
 import { getAuth, signOut } from '@firebase/auth';
+import BaseAvatar from './BaseAvatar.vue';
 
 
 export default defineComponent({
   name: "PageHeader",
 
-  components: {TitleVue, AvatarVue},
+  components: {BaseAppTitle, BaseAvatar},
 
   setup() {
     const route = useRoute();

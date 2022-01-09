@@ -40,12 +40,12 @@ import { Mutations } from '@/helpers/enums/mutations.enum';
 import User from '@/types/user.interface';
 import { collection, doc, setDoc } from '@firebase/firestore';
 import { useQuasar } from 'quasar';
-import { defineComponent, Ref, ref, watch } from 'vue'
+import { Ref, ref, watch } from 'vue'
 import { useRouter } from 'vue-router';
 import { useStore } from 'vuex';
 
-export default defineComponent({
-  name: "Settings",
+export default {
+  name: "PageSettings",
 
   setup() {
     const store = useStore();
@@ -89,7 +89,7 @@ export default defineComponent({
 
     }
   },
-})
+}
 </script>
 
 

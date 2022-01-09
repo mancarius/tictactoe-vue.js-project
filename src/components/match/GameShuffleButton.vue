@@ -25,6 +25,8 @@ import { computed, defineComponent, ref, watch } from 'vue'
 import { useStore } from 'vuex';
 
 export default defineComponent({
+  name: "GameShuffleButton",
+  
   setup() {
     const match = useMatch();
     const { setPlayerState } = useSetStates();

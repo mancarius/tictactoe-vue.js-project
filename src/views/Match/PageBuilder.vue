@@ -85,10 +85,10 @@
     </q-list>
 
     <div class="actions">
-      <my-button outline color="negative" @click="leaveRoom">Exit</my-button>
-      <my-button push color="accent" @click="createRoom">
+      <base-button outline color="negative" @click="leaveRoom">Exit</base-button>
+      <base-button push color="accent" @click="createRoom">
         Create room
-      </my-button>
+      </base-button>
     </div>
   </section>
 </template>
@@ -96,7 +96,7 @@
 
 
 <script lang="ts">
-import MyButton from '@/components/MyButton.vue';
+import BaseButton from '@/components/BaseButton.vue';
 import { Actions } from '@/helpers/enums/actions.enum';
 import { Getters } from '@/helpers/enums/getters.enum';
 import { MatchStates } from '@/helpers/enums/match-states.enum';
@@ -109,7 +109,10 @@ import { defineComponent, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router';
 
 export default defineComponent({
-  components: { MyButton },
+  name: "PageBuilder",
+
+  components: { BaseButton },
+  
   setup() {
     const route = useRoute();
     const { setMatchState } = useSetStates();

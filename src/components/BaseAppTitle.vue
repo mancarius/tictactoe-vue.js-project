@@ -6,7 +6,7 @@
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-    name: "Title",
+    name: "BaseAppTitle",
     data: () => ({
         title: process.env.VUE_APP_NAME
     }),

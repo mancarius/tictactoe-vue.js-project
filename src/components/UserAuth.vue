@@ -1,30 +1,30 @@
 <template>
-    <q-dialog v-model="showModal" :position="'bottom'" @hide="wasHided">
-        <card class="user-auth-container">
-            <template #title><h6>Sign In</h6></template>
-            <p>This is a ligth authentication, just to save your scores in anonimous form.</p>
-            <my-button v-if="!waitingForExternalAuth" class="google full" fullWidth @click="login(providers.google)">Sign in with Google</my-button>
-            <my-button v-if="!waitingForExternalAuth" class="facebook full" fullWidth @click="login(providers.facebook)">Sign in with Facebook</my-button>
-            <div v-else>Waiting for authentication...</div>
-        </card>
-    </q-dialog>
+  <q-dialog v-model="showModal" :position="'bottom'" @hide="wasHided">
+    <base-card class="user-auth-container">
+      <template #title><h6>Sign In</h6></template>
+      <p>This is a ligth authentication, just to save your scores in anonimous form.</p>
+      <base-button v-if="!waitingForExternalAuth" class="google full" fullWidth @click="login(providers.google)">Sign in with Google</base-button>
+      <base-button v-if="!waitingForExternalAuth" class="facebook full" fullWidth @click="login(providers.facebook)">Sign in with Facebook</base-button>
+      <div v-else>Waiting for authentication...</div>
+    </base-card>
+  </q-dialog>
 </template>
 
 <script lang="ts">
 import { Provider } from '@/helpers/enums/provider.enum';
 import { computed, defineComponent } from 'vue'
 import { Store, useStore } from 'vuex'
-import MyButton from './MyButton.vue'
+import BaseButton from './BaseButton.vue'
 import { Actions } from '@/helpers/enums/actions.enum'
 import { State } from 'vuex/core';
-import Card from './Card.vue';
+import BaseCard from './BaseCard.vue';
 import { getAuth, setPersistence, browserLocalPersistence, browserSessionPersistence, FacebookAuthProvider, GoogleAuthProvider, signInWithPopup, Auth } from '@firebase/auth';
 import { Mutations } from '@/helpers/enums/mutations.enum';
 import { useQuasar } from 'quasar';
 
 export default defineComponent({
   name:"UserAuth",
-  components: { MyButton, Card },
+  components: { BaseButton, BaseCard },
   setup() {
     const store: Store<State> = useStore();
     const providers = Provider;

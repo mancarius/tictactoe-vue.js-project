@@ -1,12 +1,12 @@
 <template>
 <div class="status-bar-container">
     <div class="player-container left" :class="{ alpha: !isOpponentReady }">
-        <avatar-vue class="pic dontApplyDark" :src="opponent?.photoURL" />
+        <base-avatar class="pic dontApplyDark" :src="opponent?.photoURL" />
         <span class="name" :class="{active: isOpponentTurn}">{{opponentName}}</span>
     </div>
     <span class="divider">vs</span>
     <div class="player-container right">
-        <avatar-vue class="pic dontApplyDark" :src="player?.photoURL" />
+        <base-avatar class="pic dontApplyDark" :src="player?.photoURL" />
         <span class="name" :class="{active: isPlayerTurn}">You</span>
     </div>
 </div>
@@ -17,16 +17,17 @@ import { Getters } from '@/helpers/enums/getters.enum';
 import { useMatch } from '@/plugins/match';
 import { computed, defineComponent } from 'vue'
 import { useStore } from 'vuex';
-import AvatarVue from '@/components/Avatar.vue';
 import PlayerService from '@/services/player.service';
 import { PlayerStates } from '@/helpers/enums/player-states.enum';
+import BaseAvatar from '../BaseAvatar.vue';
 
 export default defineComponent({
-  name: "StatusBar",
+  name: "GamePlayersBar",
 
-  components: { AvatarVue },
+  components: { BaseAvatar },
 
   setup() {
+    BaseAvatar
     const store = useStore();
     const match = useMatch();
     const uid = store.getters[Getters.USER_DATA].uid;

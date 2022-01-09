@@ -1,5 +1,5 @@
 <template>
-    <card class="room-code-generator full-width">
+    <base-card class="room-code-generator full-width">
       <template #title>
           <h6>Room code</h6>
       </template>
@@ -7,7 +7,7 @@
         <template  v-if="roomCode">
           <div class="fake-input room-code-field">
             <span id="room-code">{{roomCode}}</span>
-            <my-button color="accent" @click="shareCode">Share</my-button>
+            <base-button color="accent" @click="shareCode">Share</base-button>
           </div>
           <p>Share this room code with the friend you want to invite to play.</p>
         </template>
@@ -15,12 +15,12 @@
           <p>Invalid code</p>
         </template>
       </template>
-    </card>
+    </base-card>
 </template>
 
 <script lang="ts">
-import Card from '@/components/Card.vue';
-import MyButton from '@/components/MyButton.vue';
+import BaseCard from '@/components/BaseCard.vue';
+import BaseButton from '@/components/BaseButton.vue';
 import { Actions } from '@/helpers/enums/actions.enum';
 import store from '@/store';
 import { defineComponent } from 'vue';
@@ -30,7 +30,7 @@ import { useMatch } from '@/plugins/match';
 export default defineComponent({
   name:"RoomCodeGenerator",
 
-  components: { Card, MyButton },
+  components: { BaseCard, BaseButton },
 
   setup() {
     const $match = useMatch();

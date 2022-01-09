@@ -23,7 +23,10 @@ export default defineComponent({
   name:"JoinRoomBox",
 
   props: {
-    'modelValue': String
+    'modelValue': {
+        type: String,
+        required: true
+    },
   },
 
   setup() {
