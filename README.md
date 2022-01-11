@@ -79,7 +79,7 @@
 ## About The Project
 
 <p align="center">
-    <img src="images\screenshot.png" alt="Logo"  height="300">
+    <img src="./images/Logo.png" alt="Logo"  height="300">
 </p>
 
 The application allows you to play Tic Tac Toe with grids of varying sizes both against the AI ​​and against a remote player.
