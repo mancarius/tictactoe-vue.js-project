@@ -131,7 +131,7 @@ To run application you need to install npm.
     VUE_APP_STATE_STORAGE=sessionStorage
     VUE_APP_MATCH_STORAGE=sessionStorage
   ```
-3. _(optional)_ Enter your firebase configurations in the `.env` file
+3. _(optional)_ Enter your firebase configurations in the `.env.local` file
    ```sh
     VUE_APP_FIREBASE_APY_KEY=xxxxxxxxxx
     VUE_APP_FIREBASE_AUTH_DOMAIN=$VUE_APP_FIREBASE_PROJECT_ID.firebaseapp.com
