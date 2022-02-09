@@ -28,7 +28,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/tictactoe-vue.js-project/">
-    <img src="images\logo.png" alt="Logo"  height="80">
+    <img src="images\Logo.png" alt="Logo"  height="80">
   </a>
 
   <h3 align="center">Tic Tac Toe</h3>
@@ -79,7 +79,7 @@
 ## About The Project
 
 <p align="center">
-    <img src="images\screenshot.png" alt="Logo"  height="300">
+    <img src="./images/screenshot.png" alt="Logo"  height="300">
 </p>
 
 The application allows you to play Tic Tac Toe with grids of varying sizes both against the AI ​​and against a remote player.
@@ -131,7 +131,7 @@ To run application you need to install npm.
     VUE_APP_STATE_STORAGE=sessionStorage
     VUE_APP_MATCH_STORAGE=sessionStorage
   ```
-3. _(optional)_ Enter your firebase configurations in the `.env` file
+3. _(optional)_ Enter your firebase configurations in the `.env.local` file
    ```sh
     VUE_APP_FIREBASE_APY_KEY=xxxxxxxxxx
     VUE_APP_FIREBASE_AUTH_DOMAIN=$VUE_APP_FIREBASE_PROJECT_ID.firebaseapp.com
